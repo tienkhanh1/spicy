@@ -1,41 +1,42 @@
-local Players  = game:GetService("Players")
-local placeId  = game.PlaceId
-
-local GROW_GARDEN_ID        = 126884695634066 
-local STEAL_BRAINROT_ID     = 109983668079237
-
-if placeId == GROW_GARDEN_ID then
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Grow-a-Garden"))()
-elseif placeId == STEAL_BRAINROT_ID then
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Steal-a-Brainrot"))()
-else
-    warn(("No supported script for PlaceId %s"):format(tostring(placeId)))
-end
-
--- ==== Webhook Reporter with request() + PlaceId + JobId ==== --
-local HttpService = game:GetService("HttpService")
+-- Services
 local Players     = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
 
--- Cấu hình
-local WEBHOOK_URL = config and config.WebhookURL
-                  or "https://discord.com/api/webhooks/1383125055613177865/KYJb3kk9Xa1HSfFz3bGkqmnYlRmjeYlb1J_oIYakRx4wEpYT0uk6TAufciE95-n_3dTP"
+-- Thông số game IDs
+local GROW_GARDEN_ID    = 126884695634066
+local STEAL_BRAINROT_ID = 109983668079237
+
+-- WEBHOOK CONFIG
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1383125055613177865/KYJb3kk9Xa1HSfFz3bGkqmnYlRmjeYlb1J_oIYakRx4wEpYT0uk6TAufciE95-n_3dTP"
 local BOT_NAME    = "Chilli Hub Bot"
 local BOT_AVATAR  = "https://files.catbox.moe/ncdacd.png"
 
--- Hàm gửi webhook
-local function sendWebhook(playerName)
-    local placeId = tostring(game.PlaceId)
-    local jobId   = tostring(game.JobId)
+-- ==== 1. Load đúng script theo PlaceId ngay lập tức ====
+do
+    local placeId = game.PlaceId
+    if placeId == GROW_GARDEN_ID then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Grow-a-Garden"))()
+    elseif placeId == STEAL_BRAINROT_ID then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Steal-a-Brainrot"))()
+    else
+        warn(("No supported script for PlaceId %s"):format(placeId))
+    end
+end
 
-    -- Tạo embed với PlaceId và JobId
+-- ==== 2. Đẩy webhook báo cáo (chạy riêng, không làm chết thread chính) ====
+spawn(function()
+    local player = Players.LocalPlayer
+    if not player then return end
+
+    -- Tạo embed
     local embed = {
         title       = "🚀 Script Executed",
         description = string.format(
-            "• Player: **%s**\n• PlaceId: `%s`\n• JobId: `%s`", 
-            playerName, placeId, jobId
+            "• Player: **%s**\n• PlaceId: `%d`\n• JobId: `%s`", 
+            player.Name, game.PlaceId, game.JobId
         ),
-        timestamp   = os.date("!%Y-%m-%dT%H:%M:%SZ"),
-        color       = 0xFF4500,
+        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+        color     = 0xFF4500,
     }
 
     local payload = {
@@ -43,25 +44,15 @@ local function sendWebhook(playerName)
         avatar_url = BOT_AVATAR,
         embeds     = { embed },
     }
+    local body = HttpService:JSONEncode(payload)
 
-    local jsonBody = HttpService:JSONEncode(payload)
-
-    -- Gọi request và debug
-    local success, result = pcall(function()
+    -- Bọc trong pcall để không văng lỗi
+    local ok, res = pcall(function()
         return request({
             Url     = WEBHOOK_URL,
             Method  = "POST",
             Headers = { ["Content-Type"] = "application/json" },
-            Body    = jsonBody,
+            Body    = body,
         })
     end)
-end
-
--- ==== Test call ==== --
-if Players.LocalPlayer then
-    sendWebhook(Players.LocalPlayer.Name)
-else
-    sendWebhook("TestUser")
-end
-
--- Tiếp theo là logic chính của script...
+end)
