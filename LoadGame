@@ -1,0 +1,58 @@
+-- Services
+local Players     = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+
+-- Thông số game IDs
+local GROW_GARDEN_ID    = 126884695634066
+local STEAL_BRAINROT_ID = 109983668079237
+
+-- WEBHOOK CONFIG
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1383125055613177865/KYJb3kk9Xa1HSfFz3bGkqmnYlRmjeYlb1J_oIYakRx4wEpYT0uk6TAufciE95-n_3dTP"
+local BOT_NAME    = "Chilli Hub Bot"
+local BOT_AVATAR  = "https://files.catbox.moe/ncdacd.png"
+
+-- ==== 1. Load đúng script theo PlaceId ngay lập tức ====
+do
+    local placeId = game.PlaceId
+    if placeId == GROW_GARDEN_ID then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Grow-a-Garden"))()
+    elseif placeId == STEAL_BRAINROT_ID then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Steal-a-Brainrot"))()
+    else
+        warn(("No supported script for PlaceId %s"):format(placeId))
+    end
+end
+
+-- ==== 2. Đẩy webhook báo cáo (chạy riêng, không làm chết thread chính) ====
+spawn(function()
+    local player = Players.LocalPlayer
+    if not player then return end
+
+    -- Tạo embed
+    local embed = {
+        title       = "🚀 Script Executed",
+        description = string.format(
+            "• Player: **%s**\n• PlaceId: `%d`\n• JobId: `%s`", 
+            player.Name, game.PlaceId, game.JobId
+        ),
+        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+        color     = 0xFF4500,
+    }
+
+    local payload = {
+        username   = BOT_NAME,
+        avatar_url = BOT_AVATAR,
+        embeds     = { embed },
+    }
+    local body = HttpService:JSONEncode(payload)
+
+    -- Bọc trong pcall để không văng lỗi
+    local ok, res = pcall(function()
+        return request({
+            Url     = WEBHOOK_URL,
+            Method  = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body    = body,
+        })
+    end)
+end)
