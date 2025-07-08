@@ -9,7 +9,6 @@ local blockedPlaceIds = {
     [121424241225362]   = true,
     [84547852189035]    = true,
 }
-
 if not blockedPlaceIds[game.PlaceId] then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/LoadGame"))()
 else
