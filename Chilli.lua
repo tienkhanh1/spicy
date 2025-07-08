@@ -1,10 +1,8 @@
-local blockedPlaceIds = {
-    [85451850104706]   = true,
-    [120437750477306]  = true,
-    [127298957482489]  = true,
-}
-if not blockedPlaceIds[game.PlaceId] then
+-- Chỉ load khi PlaceId đúng
+local targetPlaceId = 109983668079237
+
+if game.PlaceId == targetPlaceId then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/LoadGame"))()
 else
-    warn("Blocked PlaceId " .. game.PlaceId)
+    warn("No support this PlaceId " .. game.PlaceId)
 end
