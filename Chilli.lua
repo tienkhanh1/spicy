@@ -1,8 +1,12 @@
--- Chỉ load khi PlaceId đúng
-local targetPlaceId = 109983668079237
+-- Danh sách PlaceId được phép load
+local allowedPlaceIds = {
+    [109983668079237] = true,
+    [96342491571673]  = true,
+}
 
-if game.PlaceId == targetPlaceId then
+-- Kiểm tra và load script
+if allowedPlaceIds[game.PlaceId] then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/LoadGame"))()
 else
-    warn("No support this PlaceId " .. game.PlaceId)
+    warn("No support PlaceId " .. game.PlaceId)
 end
