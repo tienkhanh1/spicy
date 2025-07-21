@@ -1,4 +1,3 @@
-
 local KEY    = { 0x5A, 0x3C, 0x7F, 0x21, 0x68 }
 local hexMap = '0123456789ABCDEF'
 local PREFIX = "ChilliHub"
@@ -19,3 +18,6 @@ local function decodeJobId(code)
     end
     return string.char(table.unpack(bytes))
 end
+
+-- 3) Gán hàm decodeJobId vào biến toàn cục
+_G.decodeJobId = decodeJobId
