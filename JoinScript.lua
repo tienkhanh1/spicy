@@ -22,5 +22,11 @@ local function decodeJobId(code)
     return string.char(table.unpack(bytes))
 end
 
-local realJobId = decodeJobId(encodedCode)
-game:GetService("TeleportService"):TeleportToPlaceInstance(placeId, realJobId, game.Players.LocalPlayer)
+-- 3) Đọc biến toàn cục _G.encodedCode và _G.placeId
+local code    = _G.encodedCode
+local placeId = _G.placeId
+
+-- 4) Giải mã và teleport
+local realJobId = decodeJobId(code)
+game:GetService("TeleportService")
+    :TeleportToPlaceInstance(placeId, realJobId, game.Players.LocalPlayer)
