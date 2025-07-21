@@ -1,3 +1,6 @@
+-- JoinScript.lua
+
+-- 1) Khóa và bản đồ hex
 local KEY    = { 0x5A, 0x3C, 0x7F, 0x21, 0x68 }
 local hexMap = '0123456789ABCDEF'
 local PREFIX = "ChilliHub"
@@ -19,5 +22,5 @@ local function decodeJobId(code)
     return string.char(table.unpack(bytes))
 end
 
--- 3) Gán hàm decodeJobId vào biến toàn cục
-_G.decodeJobId = decodeJobId
+local realJobId = decodeJobId(encodedCode)
+game:GetService("TeleportService"):TeleportToPlaceInstance(placeId, realJobId, game.Players.LocalPlayer)
