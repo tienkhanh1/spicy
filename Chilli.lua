@@ -11,15 +11,27 @@ end
 
 if checkExecutor() then
     loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/66e067f17cbfa177b7bed91c1bdcb466.lua"))()
-    
     return 
 end
 
 local Players       = game:GetService("Players")
 local TweenService  = game:GetService("TweenService")
 local HttpService   = game:GetService("HttpService")
+local CoreGui       = game:GetService("CoreGui") -- Thêm Service CoreGui
 local LocalPlayer   = Players.LocalPlayer
-local playerGui     = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui")
+
+-- [[ CHỈNH SỬA: Thay đổi vị trí đặt UI sang CoreGui/gethui ]] --
+local function GetSafeGui()
+    -- Ưu tiên dùng gethui() (ẩn UI khỏi game check)
+    if gethui then return gethui() end
+    -- Nếu không có gethui thì dùng CoreGui
+    if CoreGui then return CoreGui end
+    -- Cuối cùng mới dùng PlayerGui nếu 2 cái trên lỗi
+    return LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local playerGui     = GetSafeGui() 
+-- [[ HẾT PHẦN CHỈNH SỬA ]] --
 
 local DISCORD_LINK  = "https://discord.gg/chilli-hub"
 local REMOTE_URL    = "https://raw.githubusercontent.com/tkhanhh/Spicy/refs/heads/main/loo"
