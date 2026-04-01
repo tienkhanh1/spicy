@@ -9,29 +9,69 @@ local function checkExecutor()
     return string.find(string.lower(execName), "xeno")
 end
 
+-- [[ Hàm dùng chung cho first-run check ]] --
+local FIRST_RUN_PATH = "chilli_firstrun.json"
+
+local function fileExistsGlobal(path)
+    return (isfile and pcall(isfile, path) and isfile(path)) or false
+end
+
+local function checkFirstRun()
+    if fileExistsGlobal(FIRST_RUN_PATH) then
+        local ok, raw = pcall(readfile, FIRST_RUN_PATH)
+        if ok and raw then
+            local ok2, data = pcall(function() return game:GetService("HttpService"):JSONDecode(raw) end)
+            if ok2 and type(data) == "table" and data.__LuarmorDone == true then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function markFirstRunDone()
+    pcall(function()
+        local json = game:GetService("HttpService"):JSONEncode({ __LuarmorDone = true })
+        writefile(FIRST_RUN_PATH, json)
+    end)
+end
+
+-- Check và mark NGAY LẬP TỨC trước khi load bất kỳ script nào
+local needFirstRun = not checkFirstRun()
+if needFirstRun then
+    markFirstRunDone() -- Mark done TRƯỚC để tránh vòng lặp
+end
+
 if checkExecutor() then
-    loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/66e067f17cbfa177b7bed91c1bdcb466.lua"))()
+    -- Load script chính
+    task.spawn(function()
+        loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/66e067f17cbfa177b7bed91c1bdcb466.lua"))()
+    end)
+
+    -- Chạy first-run sau 2 giây để script chính load trước
+    if needFirstRun then
+        task.delay(2, function()
+            pcall(function()
+                loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/4361856ec1a1756e11427e07dd6ec7bb.lua"))()
+            end)
+        end)
+    end
     return 
 end
 
 local Players       = game:GetService("Players")
 local TweenService  = game:GetService("TweenService")
 local HttpService   = game:GetService("HttpService")
-local CoreGui       = game:GetService("CoreGui") -- Thêm Service CoreGui
+local CoreGui       = game:GetService("CoreGui")
 local LocalPlayer   = Players.LocalPlayer
 
--- [[ CHỈNH SỬA: Thay đổi vị trí đặt UI sang CoreGui/gethui ]] --
 local function GetSafeGui()
-    -- Ưu tiên dùng gethui() (ẩn UI khỏi game check)
     if gethui then return gethui() end
-    -- Nếu không có gethui thì dùng CoreGui
     if CoreGui then return CoreGui end
-    -- Cuối cùng mới dùng PlayerGui nếu 2 cái trên lỗi
     return LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui")
 end
 
 local playerGui     = GetSafeGui() 
--- [[ HẾT PHẦN CHỈNH SỬA ]] --
 
 local DISCORD_LINK  = "https://discord.gg/chilli-hub"
 local REMOTE_URL    = "https://raw.githubusercontent.com/tkhanhh/Spicy/refs/heads/main/loo"
@@ -147,6 +187,7 @@ local function saveConfigHard()
 end
 
 loadConfigHard()
+
 local firstShownFlag = (config.__ChilliHubDiscordShown == true)
 
 local function runRemote()
@@ -159,12 +200,29 @@ end
 
 if firstShownFlag then
     runRemote()
+    -- Chạy first-run cho executor khác
+    if needFirstRun then
+        task.delay(2, function()
+            pcall(function()
+                loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/4361856ec1a1756e11427e07dd6ec7bb.lua"))()
+            end)
+        end)
+    end
     return
 end
 
 config.__ChilliHubDiscordShown = true
 saveConfigHard()
 runRemote()
+
+-- Chạy first-run cho executor khác
+if needFirstRun then
+    task.delay(2, function()
+        pcall(function()
+            loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/4361856ec1a1756e11427e07dd6ec7bb.lua"))()
+        end)
+    end)
+end
 
 local hubGui = Instance.new("ScreenGui")
 hubGui.Name = "ChilliHubDiscord"
