@@ -1,4 +1,4 @@
--- Client-only Settings UI. Demo options do not call gameplay/settings code.
+return function(C0)
 local player = game:GetService("Players").LocalPlayer
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
@@ -95,8 +95,8 @@ local function createEmbeddedSpider()
     return spider
 end
 
--- Remove old Settings/launcher screens from the resolved UI parent so another
--- execution does not stack the interface. PlayerGui is never used.
+
+
 local cleanupNames = {
     [ROOT_GUI_NAME] = true,
     [LAUNCHER_GUI_NAME] = true,
@@ -156,10 +156,10 @@ local function cleanupOldUiScreens(excludedRoot, excludedLauncher)
     end
 end
 cleanupOldUiScreens()
--- Used by the embedded UI dump below. Each property is still applied
--- under its own pcall, so a property this client build does not know is
--- skipped exactly as before - but pcall(f, a, b, c) passes arguments
--- instead of capturing them, so none of the 414 calls allocates a closure.
+
+
+
+
 local function chilliSetProperty(instance, key, value)
     instance[key] = value
 end
@@ -657,12 +657,12 @@ pcall(chilliSetProperty, objects.obj25, "HorizontalScrollBarInset", Enum.ScrollB
 objects.obj25.Parent = objects.obj2
 
 
---=========================================================================
--- Refactored architecture:
---   static shell + launcher are preserved from the visual clone;
---=========================================================================
--- Preview-only interactions.
--- These handlers only move/toggle the recreated UI; they do not call game settings, remotes, or saved data.
+
+
+
+
+
+
 local rootGui = objects.obj1
 local mainFrame = objects.obj2
 local topBar = objects.obj4
@@ -689,15 +689,15 @@ local function disconnectRootConnections()
 end
 
 rootGui.ResetOnSpawn = false
--- Use the same full-screen coordinate space as Base Target Panel and the
--- Steal progress overlay. The top edge is now the physical screen edge,
--- instead of beginning below Roblox's top-bar inset.
+
+
+
 rootGui.IgnoreGuiInset = true
 rootGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Keep every draggable Chilli overlay on the same 0..0.998 horizontal and
--- 0..0.98 top-edge bounds used by Base Target Panel. The feature file does
--- not need to change: this watches only the known Chilli overlay ScreenGuis.
+
+
+
 do
     local managedNames = {
         ChilliAutoGetTargetPanel = true,
@@ -730,8 +730,8 @@ do
             local minX = width * anchor.X
             local maxX = 0.998 - width * (1 - anchor.X)
             local minY = height * anchor.Y
-            -- Match Base Target Panel: its TOP edge may travel to 98% of the
-            -- screen, so the drag handle always remains recoverable.
+            
+            
             local maxY = 0.98 + height * anchor.Y
             local nextX = math.clamp(x, math.min(minX, maxX), math.max(minX, maxX))
             local nextY = math.clamp(y, math.min(minY, maxY), math.max(minY, maxY))
@@ -775,7 +775,7 @@ do
     end
 end
 
--- Create a Scale-based fallback immediately, then adopt live LeftCenter geometry/style.
+
 local function findLeftCenterSources()
     local screen = playerGui:FindFirstChild("LeftCenter")
     local frame = screen and screen:FindFirstChild("LeftCenter")
@@ -1147,8 +1147,8 @@ end
 
 local launcherLayoutQueued = false
 local function queueChilliLauncherLayout()
-    -- Tween Position khong doi hinh hoc tuong doi cua launcher. Bo qua cac
-    -- AbsolutePosition signal trong luc tween va do lai dung mot lan o cuoi.
+    
+    
     if hudTween or launcherLayoutQueued then
         return
     end
@@ -1330,8 +1330,8 @@ local function adoptLeftCenterSources(screen, frame, buttons, shop, icon, text)
     else
         hudRestorePosition = leftCenterFrame.Position
     end
-    -- A former interrupted hide may have stored an already shifted position.
-    -- Bring it back to the one visible-screen coordinate before using it.
+    
+    
     while hudRestorePosition.X.Scale <= -0.5 do
         hudRestorePosition = UDim2.new(
             hudRestorePosition.X.Scale + 1,
@@ -1374,9 +1374,9 @@ local function adoptLeftCenterSources(screen, frame, buttons, shop, icon, text)
                 launcherGui:GetAttribute("QuickHudHidden") == true
                 or Runtime.chilliIsOpen
             if shouldStayHidden then
-                -- Game prompts may try to restore LeftCenter while opening an
-                -- NPC window. Once our own tween is done, immediately keep the
-                -- saved hidden position without changing the user's state.
+                
+                
+                
                 if not hudTween then
                     local hiddenPosition = shiftOneScreenLeft(
                         hudRestorePosition
@@ -1466,8 +1466,8 @@ else
     end)
 end
 
--- The game may replace LeftCenter after an NPC window closes. Adopt the new
--- live objects immediately so a replacement cannot bypass the hidden state.
+
+
 trackRootConnection(playerGui.DescendantAdded:Connect(function()
     local screen, frame, buttons, shop, icon, text = findLeftCenterSources()
     if frame
@@ -1478,9 +1478,9 @@ trackRootConnection(playerGui.DescendantAdded:Connect(function()
     end
 end))
 
--- Keep a hidden LeftCenter outside the rendered frame. Some game windows
--- restore it with their own tween when they close, so the normal Position
--- signal alone can still allow one visible frame.
+
+
+
 local HUD_RENDER_GUARD_NAME = "ChilliLibraryLeftCenterRenderGuard"
 
 local function enforceHiddenLeftCenterBeforeRender()
@@ -1556,10 +1556,10 @@ rootGui.Destroying:Connect(function()
 end)
 
 local function applyOriginalStrokeSizing()
-    -- One pcall for the whole sweep rather than one per stroke. These three
-    -- properties arrived in the same engine version, so a client either has
-    -- all of them or none; there is nothing to gain from letting each
-    -- stroke fail on its own, and 2134 closures to lose.
+    
+    
+    
+    
     pcall(function()
         for _, inst in ipairs(rootGui:GetDescendants()) do
             if inst:IsA("UIStroke") then
@@ -1612,8 +1612,8 @@ local function makeDraggable(handle, target, canStart, moved)
         then
             return
         end
-        -- A real button in the title bar owns its own press. Do not let that
-        -- same pointer also start moving the whole window behind the button.
+        
+        
         for _, child in ipairs(handle:GetDescendants()) do
             if child:IsA("GuiButton") and child.Visible then
                 local childPosition = child.AbsolutePosition
@@ -1665,9 +1665,9 @@ local function makeDraggable(handle, target, canStart, moved)
         local minX = targetFraction.X * anchor.X
         local maxX = 0.998 - targetFraction.X * (1 - anchor.X)
         local minY = targetFraction.Y * anchor.Y
-        -- Base Target Panel constrains its top edge to 0..0.98 rather than
-        -- constraining the bottom edge. Apply the same recoverable-handle
-        -- range to the main Chilli window.
+        
+        
+        
         local maxY = 0.98 + targetFraction.Y * anchor.Y
 
         target.Position = UDim2.fromScale(
@@ -1706,9 +1706,9 @@ local function makeDraggable(handle, target, canStart, moved)
     }
 end
 
--- A GuiButton may receive a synthetic click after a mobile finger scrolls
--- across it. Keep the InputObject that genuinely began on the button and
--- reject Touch activation after that finger has travelled like a scroll.
+
+
+
 local SAFE_TOUCH_TAP_DISTANCE = 10
 local safeTouchPresses = setmetatable({}, { __mode = "k" })
 
@@ -1749,8 +1749,8 @@ trackRootConnection(UserInputService.InputEnded:Connect(function(input)
     then
         press.Cancelled = true
     end
-    -- Activated can be dispatched immediately after InputEnded. Retain this
-    -- exact touch briefly so event ordering cannot discard a valid tap.
+    
+    
     task.delay(0.2, function()
         if safeTouchPresses[input] == press then
             safeTouchPresses[input] = nil
@@ -1868,29 +1868,29 @@ local animationLocked = false
 local windowTween = nil
 local windowTweenConnection = nil
 local windowAnimationSerial = 0
--- True trong suot animation dong/mo. Vi tri duoc tween trong engine, con
--- kich thuoc khung luon co dinh de cay UI khong bi reflow moi frame.
+
+
 Runtime.windowAnimating = false
 
---=========================================================================
--- CONTENT SCALE
---
--- Khung nen (mainFrame) duoc phep to nho tu do, nhung MOI THU BEN TRONG
--- phai giu dung kich thuoc pixel goc. Cach lam: giu lai kich thuoc menu
--- luc khoi dong lam moc, roi moi cho dung Scale ben trong deu duoc chia
--- cho ti le hien tai. Menu to gap doi -> Scale con mot nua -> pixel that
--- khong doi, va vung cuon dai ra nen chua duoc nhieu option hon.
---
--- Ti le tinh tu Runtime.menuSize (kich thuoc logic) chu KHONG tu AbsoluteSize, vi
--- animation dong/mo khong doi Size; van dung Runtime.menuSize lam nguon duy nhat
--- de resize va animation khong tranh nhau cap nhat hinh hoc.
---=========================================================================
--- X va Y doc lap: keo rong ra chi anh huong cot ngang, keo cao ra chi anh
--- huong cot doc.
---
--- Ca hai deu duoc chan duoi o 1: khi khung NHO HON kich thuoc goc thi khong
--- the giu noi dung o co that duoc nua (row se rong hon ca trang, tieu de se
--- tran ra ngoai), nen luc do UI quay ve co che scale deu nhu ban goc.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local ContentScale = {
     Base = Runtime.menuSize,
     Listeners = {},
@@ -1899,7 +1899,7 @@ local ContentScale = {
     Y = 1,
 }
 
--- callback(scaleX, scaleY). Tra ve false trong callback de tu huy dang ky.
+
 function ContentScale.OnChanged(callback)
     table.insert(ContentScale.Listeners, callback)
     callback(ContentScale.X, ContentScale.Y)
@@ -1943,25 +1943,25 @@ function ContentScale.Refresh()
     end
 end
 
---=========================================================================
--- Bo khoa ti le 1.34 cua khung de keo rong / cao doc lap.
---
--- Truoc khi bo, tinh tay xem constraint dang cho ra kich thuoc nao roi ghi
--- lai thanh Runtime.menuSize, de lan mo dau tien khung trong y het ban cu. Dung
--- ViewportSize + GuiInset thay vi AbsoluteSize vi AbsoluteSize chua duoc
--- Roblox tinh o frame dau tien.
---=========================================================================
+
+
+
+
+
+
+
+
 do
     local aspectConstraint = objects.obj24
     local ratio = aspectConstraint.AspectRatio
-    -- UIAspectRatioConstraint KHONG co thuoc tinh Enabled (chi UIStroke va
-    -- UIGradient moi co). Muon bo khoa ti le thi phai go han constraint ra
-    -- khoi mainFrame. Giu Parent = nil thay vi Destroy de objects.obj24 van
-    -- con tham chieu, can thi gan lai Parent = mainFrame la khoa lai duoc.
+    
+    
+    
+    
     aspectConstraint.Parent = nil
 
-    -- Khoi nay chay o top-level nen mot loi nho la chet ca script; moi thu
-    -- co the loi deu co gia tri du phong.
+    
+    
     local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
     if viewport.X < 1 or viewport.Y < 1 then
         viewport = Vector2.new(1280, 720)
@@ -1991,9 +1991,9 @@ do
         end
     end
 
-    -- Touch-only devices start at 130% of the normal main-window size.
-    -- Use one shared multiplier so the original aspect ratio is preserved,
-    -- but still fit inside unusually small phone screens.
+    
+    
+    
     if UserInputService.TouchEnabled
         and not UserInputService.KeyboardEnabled
         and not UserInputService.MouseEnabled
@@ -2019,9 +2019,9 @@ local function setLeftCenterHidden(hidden)
     cancelHudTween()
 
     if hidden then
-        -- Neu dang tween tro ve ma UI duoc mo lai ngay, attribute van giu
-        -- vi tri goc that. Tuyet doi khong lay vi tri giua tween lam goc moi,
-        -- neu khong moi lan bam nhanh HUD se troi them sang trai.
+        
+        
+        
         local savedRestorePosition = launcherGui:GetAttribute(
             "HudRestorePosition"
         )
@@ -2070,8 +2070,8 @@ local function setLeftCenterHidden(hidden)
             tweenInfo,
             { Position = target }
         )
-        -- The Chilli launcher is independent from LeftCenter and remains
-        -- visible even while the main window is open.
+        
+        
         TweenService:Create(
             launcherRoot,
             tweenInfo,
@@ -2080,7 +2080,7 @@ local function setLeftCenterHidden(hidden)
             }
         ):Play()
     else
-        -- No source HUD was found, so only keep the standalone launcher put.
+        
         hudTween = TweenService:Create(
             launcherRoot,
             tweenInfo,
@@ -2096,8 +2096,8 @@ local function setLeftCenterHidden(hidden)
         then
             return
         end
-        -- Another game tween can cancel this tween. Always release the active
-        -- tween state first; otherwise every later guard remains disabled.
+        
+        
         if hudTweenConnection then
             hudTweenConnection:Disconnect()
             hudTweenConnection = nil
@@ -2231,8 +2231,8 @@ local function playCloseAnimation()
     if not Runtime.chilliIsOpen then
         return
     end
-    -- Neu nut Close duoc bam trong luc van dang giu thanh title, dung drag
-    -- truoc khi tween de InputChanged khong tiep tuc giat khung tro lai.
+    
+    
     if Runtime.windowDragController then
         Runtime.windowDragController.Cancel()
     end
@@ -2254,20 +2254,20 @@ local function playCloseAnimation()
     end)
 end
 
---=========================================================================
--- RESIZE GRIP (goc duoi phai cua menu)
---
--- Keo grip de scale toan bo menu. Ti le khung van do UIAspectRatioConstraint
--- co san (obj24) giu, nen keo cheo la scale dong deu - moi thu ben trong
--- deu Scale-based + TextScaled + scaled stroke nen tu co gian sach.
--- Khung khong con khoa ti le: keo ngang doi be rong, keo doc doi chieu cao,
--- keo cheo doi ca hai. Vi mainFrame co AnchorPoint (0.5, 0.5) nen khung no
--- ra ca hai phia; delta con tro duoc nhan 2 de goc duoi phai bam dung ngon
--- tay / con tro.
---=========================================================================
 
--- Gom vao mot bang thay vi 4 local roi: main chunk dang sat tran 200
--- local cua Lua nen moi slot deu dang gia.
+
+
+
+
+
+
+
+
+
+
+
+
+
 local RESIZE_LIMITS = {
     MinWidth = 0.20,
     MaxWidth = 0.98,
@@ -2275,10 +2275,10 @@ local RESIZE_LIMITS = {
     MaxHeight = 0.98,
 }
 
--- false -> option BAM theo nen: khung keo rong ra thi option dai ra theo,
---          keo hep lai thi ngan lai; rieng CHIEU DOC (chieu cao row, co
---          chu) giu nguyen, khong scale theo khung.
--- true  -> option giu nguyen ca chieu rong (hai ben thanh khoang trong).
+
+
+
+
 local RESIZE_KEEPS_OPTION_WIDTH = false
 
 local resizeGrip = Instance.new("TextButton")
@@ -2301,7 +2301,7 @@ resizeGripAspect.AspectType = Enum.AspectType.FitWithinMaxSize
 resizeGripAspect.DominantAxis = Enum.DominantAxis.Width
 resizeGripAspect.Parent = resizeGrip
 
--- 3 vach cheo "/" kieu grip co dien, mau trang mo cho hop nen do dam.
+
 local resizeGripBars = {}
 for _, bar in ipairs({
     { 0.5, 0.5, 0.9 },
@@ -2429,7 +2429,7 @@ trackRootConnection(UserInputService.InputEnded:Connect(function(input)
     end
 end))
 
--- Grip giu nguyen co that va van nam sat goc duoi phai.
+
 ContentScale.OnChanged(function(scaleX, scaleY)
     resizeGrip.Position = UDim2.fromScale(
         1 - 0.002 / scaleX,
@@ -2438,8 +2438,8 @@ ContentScale.OnChanged(function(scaleX, scaleY)
     resizeGrip.Size = UDim2.fromScale(0.05 / scaleX, 0.05 / scaleY)
 end)
 
--- Thanh title: chieu cao, icon, tieu de va nut dong deu giu nguyen co that.
--- Cac toa do X chia cho scale de le trai/phai khong bi noi rong ra.
+
+
 ContentScale.OnChanged(function(scaleX, scaleY)
     topBar.Size = UDim2.new(1, 0, 0.125 / scaleY, 0)
     objects.obj12.Position = UDim2.new(
@@ -2728,40 +2728,40 @@ sideButtons.Active = false
 sideButtons.AnchorPoint = Vector2.new(1, 0.5)
 sideButtons.BackgroundTransparency = 1
 sideButtons.BorderSizePixel = 0
--- The left tab column occupies exactly the Main UI height. The Search bar is
--- outside mainFrame, so it is intentionally not included here. Same width and
--- vertical centre as the right column, so the two columns are true mirrors.
+
+
+
 sideButtons.Position = UDim2.new(-0.025, 0, 0.558, 0)
 sideButtons.Size = UDim2.new(0.2612044513, 0, 1, 0)
 sideButtons.ZIndex = 99
 sideButtons.Parent = mainFrame
 
---=========================================================================
---  DEMO OPTION ROWS - General section (preview only, no game logic)
---    1. Dropdown  (list nhieu lua chon, xo xuong inline)
---    2. Push button (nut nhan thay cho cong tac)
---    3. Text input  (o nhap text)
---
---  Tat ca dung lai primitive co san phia tren: buildRowPlate copy y het
---  "Main" plate cua Slider/Switch (den 50% + UIStroke scaled 0.05), cot
---  control nam dung toa do thanh slider (center 0.78437, rong 0.40124),
---  chu di qua applyPlainTextStyle / applyShinyTextStyle, nut dung lai
---  layer Main > ColorFrame > Transparent > Label cua createRebirthStyleButton.
---=========================================================================
+
+
+
+
+
+
+
+
+
+
+
+
 
 local ACCENT_GRADIENT = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(58, 255, 55)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 109, 0)),
 })
 
--- Cac so nay lay nguyen tu Slider/Switch row co san.
+
 local ROW_ASPECT = 10
 local ROW_WIDTH_SCALE = 0.97
--- Cot control rong bang 1/2 thanh slider goc; canh phai van thang hang
--- voi slider/switch phia tren (~0.985) nen ca 5 row cung mot le.
--- Gom thanh bang: main chunk dang sat tran 200 local cua Lua.
--- Narrow = nut bam; Wide = dropdown va o nhap text. Canh phai ca hai deu
--- ghim o ~0.985 nen moi cot thang mot le.
+
+
+
+
+
 local CONTROL_LAYOUT = {
     NarrowWidth = 0.20062215626239776,
     NarrowCenterX = 0.8846889218690012,
@@ -2769,37 +2769,37 @@ local CONTROL_LAYOUT = {
     WideCenterX = 0.845,
 }
 
--- Mot mau phang duy nhat cho ca 2 thanh cua mui ten: neu de gradient rieng
--- tung thanh thi cho gap se lo ra thanh 2 duong ghep lai.
+
+
 local CHEVRON_COLOR = Color3.fromRGB(58, 255, 55)
--- Mui ten doi don vi trong o Slider (khac voi mui ten cua Dropdown thuong
--- o tren, van giu mau xanh la).
+
+
 local UNIT_CHEVRON_COLOR = Color3.fromRGB(255, 255, 255)
 
--- So chip toi da tren mot dong cua menu dropdown.
+
 local MAX_CHIPS_PER_LINE = 4
 
--- true  -> chia deu cho cac dong: 5 option / toi da 4 se thanh 3 + 2.
--- false -> nhoi day tung dong: 5 option / toi da 4 se thanh 4 + 1.
--- Dong cuoi luon duoc can giua nen ban nao cung can doi.
+
+
+
 local BALANCE_CHIP_LINES = false
 
--- Be day thanh doc bao muc dang chon (dropdown don), tinh theo chieu cao
--- chip nen khong doi du co bao nhieu chip tren mot dong.
+
+
 local ACCENT_WIDTH_RATIO = 0.17
 
--- Chi hien thanh tim kiem khi so option >= nguong nay. Nang len la cac
--- dropdown ngan se khong co thanh search cho do chiem cho.
+
+
 local SEARCH_MIN_OPTIONS = 5
 
--- Row co chu thich cao hon row thuong (aspect nho hon = cao hon) de chua
--- them mot dong. Nho vay TEN OPTION van giu dung co chu nhu moi row khac,
--- khong phai thu nho lai, va chu thich van co cho tho.
+
+
+
 local ROW_ASPECT_WITH_NOTE = 7.5
 
 
--- Ten option o row co chu thich nho hon ten option row thuong mot chut,
--- cho no khong at dong chu thich ben duoi. 1.0 = bang het cac row khac.
+
+
 local NOTE_TITLE_SCALE = 0.9
 
 local function addAccentGradient(parent)
@@ -2853,7 +2853,7 @@ local function attachScaleFeedback(button, hoverScale, pressScale)
     return scale
 end
 
--- Tam nen den + label trai, giong het obj32/obj33 va obj65/obj66.
+
 local function buildRowPlate(parent, labelText)
     local main = Instance.new("Frame")
     main.Name = "Main"
@@ -2875,8 +2875,8 @@ local function buildRowPlate(parent, labelText)
     label.BackgroundTransparency = 1
     label.BorderSizePixel = 0
     label.Position = UDim2.fromScale(0.025, 0.5)
-    -- Cot control chi con rong 0.2 nen label duoc noi ra 0.72; chu van cao
-    -- y het row goc (TextScaled bi gioi han boi chieu cao 0.64).
+    
+    
     label.Size = UDim2.fromScale(0.65, 0.64)
     label.Text = labelText
     label.TextWrapped = true
@@ -2889,7 +2889,7 @@ local function buildRowPlate(parent, labelText)
     return main, label
 end
 
--- Row chieu cao co dinh (aspect 10) - dung cho Button va Input.
+
 local function buildFixedRow(name, labelText)
     local row = Instance.new("Frame")
     row.Name = name
@@ -2911,9 +2911,9 @@ local function buildFixedRow(name, labelText)
     return row, main, label
 end
 
---=========================================================================
--- Trang thai dung chung cho moi dropdown: chi cho mot cai mo tai mot luc.
---=========================================================================
+
+
+
 Runtime.activeDropdownCloser = nil
 
 local function closeActiveDropdown()
@@ -2922,15 +2922,15 @@ local function closeActiveDropdown()
     end
 end
 
---=========================================================================
--- 1. DROPDOWN
---=========================================================================
--- action = nil  -> dropdown thuong, y het truoc day.
--- action = bang -> "action dropdown": menu co them MOT dong huong dan o tren
---   va MOT nut o duoi. Bam chip chi la CHON (menu khong dong, khong chay gi);
---   chi khi bam nut thi menu moi dong va action.OnApply moi chay voi lua chon
---   dang co. Cac field: Hint (dong huong dan), ButtonText (chu tren nut),
---   OnApply(values, indices).
+
+
+
+
+
+
+
+
+
 local function createDropdownRow(
     name,
     labelText,
@@ -2945,9 +2945,9 @@ local function createDropdownRow(
     row.AnchorPoint = Vector2.new(0.5, 0.5)
     row.BackgroundTransparency = 1
     row.BorderSizePixel = 0
-    -- Row KHONG clip. UIStroke o che do Outer ve ra NGOAI khung, nen row
-    -- ma clip la xen mat 4px vien trai/phai cua tam nen va cua chip.
-    -- Viec che khuat luc dong se do menuClip ben duoi lo.
+    
+    
+    
     row.ClipsDescendants = false
     row.Position = UDim2.fromScale(0.5, 0.5)
     row.Size = UDim2.new(ROW_WIDTH_SCALE, 0, 0, 0)
@@ -2988,7 +2988,7 @@ local function createDropdownRow(
     value.AnchorPoint = Vector2.new(0.5, 0.5)
     value.BackgroundTransparency = 1
     value.BorderSizePixel = 0
-    -- Can giua trong khoang trong ben trai vach ngan.
+    
     value.Position = UDim2.fromScale(0.405, 0.5)
     value.Size = UDim2.fromScale(0.7, 0.58)
     value.Text = options[defaultIndex] or options[1]
@@ -2999,7 +2999,7 @@ local function createDropdownRow(
     value.Parent = box
     applyPlainTextStyle(value)
 
-    -- Vach ngan + mui ten: hai chi tiet lam no doc ra "dropdown" ngay lap tuc.
+    
     local divider = Instance.new("Frame")
     divider.Name = "Divider"
     divider.Active = false
@@ -3029,11 +3029,11 @@ local function createDropdownRow(
     caretAspect.DominantAxis = Enum.DominantAxis.Height
     caretAspect.Parent = caret
 
-    -- Chevron ghep tu 2 thanh xoay 45 do (khong phu thuoc font/asset).
-    -- Truoc day 2 thanh chi cham dau vao nhau nen goc gap bi khuyet -> lo
-    -- net dut o giua. Gio moi thanh keo qua diem gap dung 1/2 do day (0.1):
-    -- vua lap kin goc, vua khong loi duoi ra ngoai thanh hinh dau X.
-    -- Ca 2 thanh dung chung mot mau phang nen nhin ra 1 khoi lien mach.
+    
+    
+    
+    
+    
     for _, arm in ipairs({ { 0.335355, 45 }, { 0.664645, -45 } }) do
         local piece = Instance.new("Frame")
         piece.Name = "Arm"
@@ -3048,14 +3048,14 @@ local function createDropdownRow(
         piece.Parent = caret
     end
 
-    -- Menu nam ngay duoi thanh dropdown va trai het chieu ngang con trong
-    -- cua row. Cac option xep NGANG thanh dai chip, tu xuong dong khi
-    -- khong du cho -> row chi cao them 1-2 dong thay vi mot danh sach doc.
-    -- Khong dung UIListLayout: tinh tay vi tri tung chip thi moi co
-    -- khoang cach deu ca 2 chieu va biet truoc chinh xac chieu cao.
-    -- menuClip la thu duy nhat clip, va no rong hon row 2*clipMargin moi
-    -- ben nen vien ngoai cua chip van con cho de ve. Chieu cao cua no
-    -- chay tu 0 -> menuHeight de tao hieu ung lo dan.
+    
+    
+    
+    
+    
+    
+    
+    
     local menuClip = Instance.new("Frame")
     menuClip.Name = "Menu"
     menuClip.Active = false
@@ -3068,7 +3068,7 @@ local function createDropdownRow(
     menuClip.ZIndex = 6
     menuClip.Parent = row
 
-    -- Thanh tim kiem nam trong menuClip nen no lo/an cung menu.
+    
     local searchField, searchBox
     if #options >= SEARCH_MIN_OPTIONS then
         searchField = Instance.new("Frame")
@@ -3163,8 +3163,8 @@ local function createDropdownRow(
     local refreshSelection
     local accentWidth = 0
 
-    -- Phan RIENG cua action dropdown. Dropdown thuong (action = nil) khong
-    -- tao gi o day nen co che cu giu nguyen tuyet doi.
+    
+    
     local hintLabel = nil
     local applyButton = nil
     local applyCaption = nil
@@ -3175,8 +3175,8 @@ local function createDropdownRow(
     if action then
         applyBaseText = tostring(action.ButtonText or "Apply")
 
-        -- Dong huong dan: cho biet dropdown nay dung de lam gi truoc khi
-        -- nguoi dung bam nut. Chu mo hon chip nen doc ra la loi nhac.
+        
+        
         hintLabel = Instance.new("TextLabel")
         hintLabel.Name = "Hint"
         hintLabel.Active = false
@@ -3193,15 +3193,15 @@ local function createDropdownRow(
         applyPlainTextStyle(hintLabel)
         hintLabel.TextTransparency = 0.28
 
-        -- Nut ap dung dung DUNG bo layer cua Button trong library
-        -- (Main > ColorFrame > Transparent > Label) nen no doc ra "bam duoc"
-        -- ngay lap tuc va cung mot chat lieu voi cac nut khac.
+        
+        
+        
         applyButton = Instance.new("TextButton")
         applyButton.Name = "Apply"
         applyButton.Active = true
         applyButton.AutoButtonColor = false
-        -- Neo o tam nhu nut Button khac: hieu ung nhun/phong khi bam se no
-        -- deu ve 4 phia thay vi lech sang mot ben.
+        
+        
         applyButton.AnchorPoint = Vector2.new(0.5, 0.5)
         applyButton.BackgroundTransparency = 1
         applyButton.BorderSizePixel = 0
@@ -3261,15 +3261,15 @@ local function createDropdownRow(
         applyCaption.ZIndex = 13
         applyCaption.Parent = applyColor
         applyShinyTextStyle(applyCaption, normalTextFont)
-        -- Chu tren nut co MOT vien UIStroke rieng. Lam mo ruot chu ma quen
-        -- vien thi chi con tro lai duong vien -> phai mo ca hai cung nhip.
+        
+        
         applyCaptionStroke = applyCaption:FindFirstChildOfClass("UIStroke")
 
         applyLayers = { applyColor, applyHighlight }
 
         connectSafeActivation(applyButton, function()
-            -- Only an empty multi-select is inactive. A single-select always
-            -- has its displayed default ready without requiring a chip click.
+            
+            
             if multiSelect and not applyReady then
                 return
             end
@@ -3316,7 +3316,7 @@ local function createDropdownRow(
         item.Parent = menuClip
         addScaledStroke(item, Enum.ApplyStrokeMode.Border, 0.07)
 
-        -- Thanh doc xanh mep trai: CHI dropdown don moi co.
+        
         local accent
         if not multiSelect then
             accent = Instance.new("Frame")
@@ -3332,7 +3332,7 @@ local function createDropdownRow(
             addAccentGradient(accent)
         end
 
-        -- Che do multi: o tick vuong ben trai chip.
+        
         local tickFill
         if multiSelect then
             local tickBox = Instance.new("Frame")
@@ -3367,13 +3367,13 @@ local function createDropdownRow(
             addAccentGradient(tickFill)
         end
 
-        -- Chip hep hon dong ngang cu nen ban don can giua cho gon; ban
-        -- multi phai le trai vi da co o tick chiem cho ben trai.
+        
+        
         local text = Instance.new("TextLabel")
         text.Name = "Label"
         text.Active = false
-        -- Chip gio rong nen ca 2 ban deu can giua duoc; ban multi day
-        -- tam giua lech phai mot chut de chua o tick ben trai.
+        
+        
         text.AnchorPoint = Vector2.new(0.5, 0.5)
         text.BackgroundTransparency = 1
         text.BorderSizePixel = 0
@@ -3439,8 +3439,8 @@ local function createDropdownRow(
             else
                 currentIndex = index
                 refreshSelection(true)
-                -- Action dropdown: chon xong van de menu mo cho nguoi dung
-                -- bam nut. Dropdown thuong dong ngay nhu cu.
+                
+                
                 if not action then
                     setOpen(false)
                 end
@@ -3466,14 +3466,14 @@ local function createDropdownRow(
             elseif options[currentIndex] then
                 picked = 1
             end
-            -- Ban multi ghi luon so muc dang tick ("Delete (2)") de biet lan
-            -- bam nay tac dong len bao nhieu muc.
+            
+            
             applyCaption.Text = (multiSelect and picked > 0)
                     and (applyBaseText .. " (" .. picked .. ")")
                 or applyBaseText
             applyReady = picked > 0
-            -- Trang thai "chua chon gi": ca chu, vien chu va hai lop mau
-            -- cung mo di mot muc -> nut nhat deu chu khong bi ro net vien.
+            
+            
             local dim = applyReady and 0 or 0.45
             applyCaption.TextTransparency = dim
             if applyCaptionStroke then
@@ -3485,8 +3485,8 @@ local function createDropdownRow(
         end
     end
 
-    -- Loc theo chuoi tim kiem. Chip khong khop bi an han, va bo cuc chi
-    -- tinh tren nhung chip con hien nen so dong tu co lai.
+    
+    
     local function applyFilter()
         local query = searchQuery:lower()
         visibleItems = {}
@@ -3505,8 +3505,8 @@ local function createDropdownRow(
     local menuTween
     local headHeight, menuHeight, gapSize, clipMargin = 0, 0, 0, 0
 
-    -- Row va menuClip phai chay cung mot nhip: row no ra de lay cho, con
-    -- menuClip lo dan phan chip ben trong.
+    
+    
     local function applyOpenState(animated)
         if heightTween then
             heightTween:Cancel()
@@ -3548,8 +3548,8 @@ local function createDropdownRow(
             return
         end
 
-        -- Chieu cao dong dropdown bam theo be rong GOC nen khong phinh ra
-        -- khi khung to len.
+        
+        
         local referenceWidth = width
         if not RESIZE_KEEPS_OPTION_WIDTH then
             referenceWidth = width / ContentScale.X
@@ -3557,22 +3557,22 @@ local function createDropdownRow(
         headHeight = referenceWidth / ROW_ASPECT
         local chipHeight = headHeight * 0.62
         local count = #visibleItems
-        -- Le du de vien ngoai cua chip khong bi menuClip xen (vien day 4px).
+        
         clipMargin = chipHeight * 0.12
 
-        -- Tam nen cua row chi chiem 0.85 chieu cao nen chua 0.075 le tren
-        -- va duoi. Hai row lien tiep vi the cach nhau 0.15 * headHeight ->
-        -- lay dung con so do lam khoang cach duy nhat cho ca ngang lan doc,
-        -- the la toan bo luoi chung mot nhip, khong con cho gan cho xa.
+        
+        
+        
+        
         local plateInset = headHeight * 0.075
         gapSize = plateInset * 2
         local gap = gapSize
 
         accentWidth = chipHeight * ACCENT_WIDTH_RATIO
         head.Size = UDim2.new(1, 0, 0, headHeight)
-        -- Mep duoi tam nen nam o (headHeight - plateInset); cong gap vao la
-        -- ho tren dai chip bang dung ho duoi no. Lui them clipMargin vi
-        -- menuClip co le bao quanh phan noi dung.
+        
+        
+        
         menuClip.Position = UDim2.new(
             0.5,
             0,
@@ -3580,7 +3580,7 @@ local function createDropdownRow(
             headHeight - plateInset + gap - clipMargin
         )
 
-        -- Action: dong huong dan chiem dong tren cung, tren ca thanh search.
+        
         local hintBlock = 0
         if hintLabel then
             local hintHeight = chipHeight * 0.8
@@ -3589,7 +3589,7 @@ local function createDropdownRow(
             hintLabel.Size = UDim2.new(0, width, 0, hintHeight)
         end
 
-        -- Thanh tim kiem chiem tron mot dong, ngay duoi dong huong dan.
+        
         local searchBlock = 0
         if searchField then
             searchBlock = chipHeight + gap
@@ -3604,14 +3604,14 @@ local function createDropdownRow(
         local chipsTop = clipMargin + hintBlock + searchBlock
 
         if count == 0 then
-            -- Loc khong ra gi: chua mot dong bao thay cho dai chip, de menu
-            -- khong sap ve 0 trong luc thanh search van con do.
+            
+            
             emptyLabel.Position = UDim2.new(0, clipMargin, 0, chipsTop)
             emptyLabel.Size = UDim2.new(0, width, 0, chipHeight)
             menuHeight = hintBlock + searchBlock + chipHeight
         else
-            -- Toi da MAX_CHIPS_PER_LINE chip mot dong, va moi chip khong
-            -- duoc hep hon minChipWidth.
+            
+            
             local minChipWidth = chipHeight * 2.2
             local fitPerLine = math.floor((width + gap) / (minChipWidth + gap))
             local perLine = math.clamp(
@@ -3633,7 +3633,7 @@ local function createDropdownRow(
             for index, entry in ipairs(visibleItems) do
                 local line = math.floor((index - 1) / perLine)
                 local column = (index - 1) % perLine
-                -- Can giua tung dong: dong cuoi thieu chip van can doi.
+                
                 local inThisLine = math.min(perLine, count - line * perLine)
                 local lineWidth = inThisLine * chipWidth + (inThisLine - 1) * gap
                 entry.button.Position = UDim2.new(
@@ -3646,14 +3646,14 @@ local function createDropdownRow(
             end
         end
 
-        -- Action: nut ap dung an mot dong rieng duoi cung, can giua de
-        -- khong lan voi dai chip phia tren.
+        
+        
         if applyButton then
             local applyWidth = math.min(
                 width,
                 math.max(chipHeight * 3.6, width * 0.42)
             )
-            -- Nut neo o tam nen toa do la DIEM GIUA cua dong nut do.
+            
             applyButton.Position = UDim2.new(
                 0,
                 clipMargin + width / 2,
@@ -3664,7 +3664,7 @@ local function createDropdownRow(
             menuHeight = menuHeight + gap + chipHeight
         end
 
-        -- Chip doi kich thuoc -> ve lai thanh xanh cho dung be day moi.
+        
         refreshSelection(false)
 
         applyOpenState(animated)
@@ -3675,9 +3675,9 @@ local function createDropdownRow(
             return
         end
         if open then
-            -- Chi cho mot dropdown mo tai mot thoi diem.
+            
             closeActiveDropdown()
-            -- Moi lan mo lai la xoa tim kiem cu, hien lai day du danh sach.
+            
             if searchBox then
                 searchBox.Text = ""
             end
@@ -3769,7 +3769,7 @@ local function createDropdownRow(
     return row, {
         GetValue = getControllerValue,
         SetValue = setControllerValue,
-        -- Ba duong duoi chi co tac dung o che do action.
+        
         Apply = function()
             local values, indices = getControllerValue()
             setOpen(false)
@@ -3791,11 +3791,11 @@ local function createDropdownRow(
     }
 end
 
---=========================================================================
--- 2. PUSH BUTTON
---    Dung lai dung layer cua createRebirthStyleButton (Main > ColorFrame >
---    Transparent > Label) nhung thu nho vao cot control cua row.
---=========================================================================
+
+
+
+
+
 local function createButtonRow(name, labelText, buttonText, confirmText)
     local row, main = buildFixedRow(name, labelText)
     local currentButtonText = tostring(buttonText or "")
@@ -3865,10 +3865,10 @@ local function createButtonRow(name, labelText, buttonText, confirmText)
     caption.Parent = colorFrame
     applyShinyTextStyle(caption, normalTextFont)
 
-    -- Preview: chi doi chu 1 nhip roi tra ve, khong dung toi du lieu game.
+    
     local busy = false
-    -- Tach rieng phan HINH ANH cua mot lan bam de keybind goi lai duoc:
-    -- nhun nut + doi chu xac nhan, y het luc bam chuot.
+    
+    
     local function playPress()
         local scale = button:FindFirstChildOfClass("UIScale")
         if scale then
@@ -3911,11 +3911,11 @@ local function createButtonRow(name, labelText, buttonText, confirmText)
     return row, playPress
 end
 
---=========================================================================
--- 3. TEXT INPUT
---    Khung giong hop slider (den 60% + stroke 0.1), them gach chan xanh
---    truot ra khi focus de biet dang go.
---=========================================================================
+
+
+
+
+
 local function createInputRow(name, labelText, placeholder)
     local row, main = buildFixedRow(name, labelText)
 
@@ -3926,8 +3926,8 @@ local function createInputRow(name, labelText, placeholder)
     field.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     field.BackgroundTransparency = 0.6
     field.BorderSizePixel = 0
-    -- Khong clip: TextScaled da chan chu tran ra, va de gach chan duoi
-    -- duoc loi ra ngoai 2 ben khung.
+    
+    
     field.ClipsDescendants = false
     field.Position = UDim2.fromScale(CONTROL_LAYOUT.WideCenterX, 0.5)
     field.Size = UDim2.fromScale(CONTROL_LAYOUT.WideWidth, 0.62)
@@ -3994,46 +3994,46 @@ local function createInputRow(name, labelText, placeholder)
     return row, normalizeText
 end
 
---=========================================================================
--- 4. ROW CO CHU THICH (dung cong tac lam vi du)
---    Row cao hon row thuong dung ti le ROW_ASPECT / ROW_ASPECT_WITH_NOTE,
---    nen sau khi nhan cung ti le do vao cac kich thuoc doc thi TEN OPTION
---    va CONG TAC deu giu nguyen kich thuoc that nhu o moi row khac -
---    phan cao them chinh la cho danh cho dong chu thich.
---=========================================================================
--- CHILLI UI LIBRARY
---
--- Public hierarchy (bat buoc):
---
--- Tab config:
---   SectionsExpanded = true/false
---     Mac dinh true. Section khong co Expanded rieng se ke thua gia tri nay
---     luc script khoi tao; thao tac dong/mo sau do van duoc giu trong phien.
---   DisplayName = "Ten hien thi"
---
--- Section config:
---   Expanded = true/false
---     Neu co, gia tri nay uu tien hon SectionsExpanded cua Tab.
---
--- Dropdown "chon roi bam" (dung cho tab Config, tai su dung duoc o tab khac):
---       Name = "Load Config",
---       Options = { ... },
---       Default = "Default",
---       Hint = "Pick a config, then press Load",   -- dong huong dan trong menu
---       ButtonText = "Load",                       -- chu tren nut trong menu
---       Callback = function(name, index) end,      -- CHI chay khi bam nut
---   })
---   Section:CreateActionMultiDropdown({ ... Default = {} ... })
---       Ban nhieu lua chon: tick bao nhieu muc cung duoc, nut hien luon so
---       muc dang tick ("Delete (2)"), va Callback nhan mot BANG ten.
---     Khac dropdown thuong: bam chip chi la CHON (menu khong dong, khong chay
---     gi); chi khi bam nut trong menu thi menu moi dong va Callback moi chay.
---     Vi the Set() / SetOptions() khong bao gio ban Callback o hai loai nay.
---     Handle co them: option:Apply(), option:SetHint(...),
---     option:SetActionText(...).
---
--- thuoc mot Section, va moi Section phai thuoc mot Tab.
---=========================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 local function safeCallback(callback, ...)
     if type(callback) ~= "function" then
@@ -4088,37 +4088,37 @@ local function findDescendant(root, name)
     return found
 end
 
---=========================================================================
--- Library option primitives. Tat ca deu tai su dung dung mau, stroke,
--- font, ti le va animation cua source hien tai.
---
--- Slider/Slidebar config:
---   Min, Max, Default
---   AllowDecimals = true/false
---   DecimalPlaces = 1..6
---   Increment = buoc nhay (vi du 0.1)
---   Nhan truc tiep vao text Value de nhap; input tu clamp trong Min..Max.
---   ValueFormat(value) -> string : dinh dang chu trong o nhap.
---   ValueParse(text, current) -> number : tu doc text nguoi dung go.
---   Colors = { Number, Prefix, Suffix, Unit } + ColorEnabled : mau chu
---            trong o gia tri. Mac dinh so trang, tien to va don vi xanh la.
---            Unit = ... to mau ca tien to lan don vi mot luot.
---            ColorEnabled = false thi tat het, tro ve mot mau trang.
---   Unit = { Prefix, Options = {...}, Default, Selector, Format, Colors,
---            ColorEnabled, Callback } : gop TAT CA vao MOT o sat trai keo,
---            hien dang "$55M/s". Selector = true thi trong o co chevron,
---            bam ra menu doi don vi (K/s, M/s, B/s...). Bam cho khac trong
---            o thi o tro ve so tho de sua - CHI phan so sua duoc.
---            Format(numberText, unitName, unit, value) -> string de tu
---            ghep chuoi thanh bat ky thu gi.
---            Unit co ToBase/FromBase thi value va Min/Max tu quy doi nen
---            thanh keo tu chinh theo.
--- Handle runtime:
---   SetMin, SetMax, SetRange, SetDecimals, SetIncrement, GetRange,
---   SetValueFormat, SetValueParse, GetUnit, SetUnit, SetUnits,
---   SetUnitEnabled, SetUnitSelectorEnabled, SetUnitFormat, SetUnitCallback,
---   GetValueColors, SetValueColors, SetValueColorEnabled
---=========================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 local function createLibrarySliderRow(config)
     local rawMinimum = tonumber(config.Min) or 0
@@ -4203,10 +4203,10 @@ local function createLibrarySliderRow(config)
 
     local increment = normalizeIncrement(requestedIncrement)
 
-    -- ==== Dinh dang o nhap gia tri ====
-    -- ValueFormat(value) -> string: text hien trong o nhap khi KHONG focus.
-    -- ValueParse(text, currentValue) -> number: doc text nguoi dung go.
-    -- Khi co ValueParse, bo loc chi-cho-so tat de nguoi dung go ky tu tuy y.
+    
+    
+    
+    
     local valueFormatFn = type(config.ValueFormat or config.InputFormat)
             == "function"
         and (config.ValueFormat or config.InputFormat)
@@ -4216,7 +4216,7 @@ local function createLibrarySliderRow(config)
         and (config.ValueParse or config.InputParse)
         or nil
 
-    -- ==== Cau hinh don vi hien thi (Unit) ====
+    
     local function normalizeUnitOptions(list)
         local result = {}
         if type(list) ~= "table" then
@@ -4284,11 +4284,11 @@ local function createLibrarySliderRow(config)
             and type(unitConfig.Format) == "function"
             and unitConfig.Format
         or nil
-    -- Co bao "text dang duoc code dat" de bo loc chi-cho-so khong nhay vao.
+    
     local filteringValueText = false
 
-    -- Mau chu trong o gia tri. Mac dinh: so trang, tien to va don vi mau
-    -- xanh la (dung mau accent cua library).
+    
+    
     local valueColors = {
         Number = Color3.fromRGB(255, 255, 255),
         Prefix = CHEVRON_COLOR,
@@ -4300,7 +4300,7 @@ local function createLibrarySliderRow(config)
         if type(colors) ~= "table" then
             return
         end
-        -- Unit = to mau ca tien to lan don vi bang mot dong.
+        
         if typeof(colors.Unit) == "Color3" then
             valueColors.Prefix = colors.Unit
             valueColors.Suffix = colors.Unit
@@ -4338,7 +4338,7 @@ local function createLibrarySliderRow(config)
         )
     end
 
-    -- Tien to dat truoc so, vi du "$" -> "$55M/s".
+    
     local unitPrefix = ""
     if unitConfig and unitConfig.Prefix ~= nil then
         unitPrefix = tostring(unitConfig.Prefix)
@@ -4346,8 +4346,8 @@ local function createLibrarySliderRow(config)
     local currentUnitIndex = 1
 
     local row, main, label = buildFixedRow(config.Name, config.Name)
-    -- Chia cot: ten option | o nhap gia tri | (o don vi) | thanh keo.
-    -- Kich thuoc tung cot do updateSliderLayout() dat theo che do Unit.
+    
+    
     label.Size = UDim2.fromScale(0.43, 0.64)
 
     local valueLabel = Instance.new("TextBox")
@@ -4369,15 +4369,15 @@ local function createLibrarySliderRow(config)
     valueLabel.ZIndex = 5
     valueLabel.Parent = main
     applyPlainTextStyle(valueLabel)
-    -- Nen den + vien de nguoi dung nhan ra o nay go duoc. addScaledStroke
-    -- phai nam SAU applyPlainTextStyle: neu them truoc, getTextStroke se
-    -- chiem stroke Border nay lam vien khung bien thanh vien chu.
+    
+    
+    
     addScaledStroke(valueLabel, Enum.ApplyStrokeMode.Border, 0.1)
 
     local valuePadding = Instance.new("UIPadding")
     valuePadding.Name = "ValuePadding"
-    -- Phan so dung tron vung TextBox con lai; khong con khoang dem trai/phai
-    -- lam chu bi thu nho khi o da duoc thu gon.
+    
+    
     valuePadding.PaddingLeft = UDim.new(0, 0)
     valuePadding.PaddingRight = UDim.new(0, 0)
     valuePadding.PaddingTop = UDim.new(0, 0)
@@ -4441,12 +4441,12 @@ local function createLibrarySliderRow(config)
     holdColor.ZIndex = 6
     holdColor.Parent = hold
 
-    -- ==== O hien thi don vi ("10km/h"), style dong bo voi o nhap ====
-    -- Vach ngan + chevron nam DE LEN o gia tri nhung parent la `main`,
-    -- KHONG phai valueLabel. Ly do: UIPadding tren valueLabel khong chi
-    -- thu nho vung chu ma con thu nho ca vung dat CON cua no - de chevron
-    -- lam con thi Position 0.97 se roi vao giua vung chu va de len text.
-    -- Toa do cua ca hai duoc updateSliderLayout dat theo mep phai cua o.
+    
+    
+    
+    
+    
+    
     local unitDivider = Instance.new("Frame")
     unitDivider.Name = "UnitDivider"
     unitDivider.Active = false
@@ -4530,8 +4530,8 @@ local function createLibrarySliderRow(config)
         )
     end
 
-    -- Chi phan SO. Day cung la thu duy nhat nguoi dung sua duoc khi bam
-    -- vao o: luc focus, o tro ve dung chuoi nay.
+    
+    
     local function numberText()
         if valueFormatFn then
             local ok, text = pcall(valueFormatFn, currentValue)
@@ -4539,20 +4539,20 @@ local function createLibrarySliderRow(config)
                 return tostring(text)
             end
             if not ok then
-                -- warn(
-                --         .. tostring(text)
-                -- )
+                
+                
+                
             end
         end
         return formatValue(currentValue)
     end
 
-    -- Chuoi day du hien trong o khi KHONG focus: "$55M/s".
-    -- Tra ve (text, dungRichText). Khi to mau thi tung manh duoc boc trong
-    -- the <font> rieng nen tien to / so / don vi co mau khac nhau duoc.
-    -- Format(numberText, unitName, unit, value) -> string: chuoi tra ve
-    -- duoc dung nguyen ven va van bat RichText, nen muon nhung the mau
-    -- rieng thi cu viet thang vao do.
+    
+    
+    
+    
+    
+    
     local function displayValueText()
         local text = numberText()
         local unit = nil
@@ -4576,9 +4576,9 @@ local function createLibrarySliderRow(config)
                 return tostring(composed), valueColorEnabled
             end
             if not ok then
-                -- warn(
-                --         .. tostring(composed)
-                -- )
+                
+                
+                
             end
         end
 
@@ -4604,8 +4604,8 @@ local function createLibrarySliderRow(config)
         return (ok and length) or #plain
     end
 
-    -- Giu mep phai o so tai 0.62. Chuoi cang dai thi o chi no sang trai;
-    -- gioi han de khong nuot het ten option. Moi phep tinh deu Scale-based.
+    
+    
     refreshValueBoxGeometry = function(text)
         local showUnit = unitEnabled and #unitOptions > 0
         local showSelector = showUnit and unitSelectorEnabled
@@ -4632,7 +4632,7 @@ local function createLibrarySliderRow(config)
             0.64
         )
 
-        -- De chevron de thay hon nhung van chiem it cho cua o so.
+        
         valuePadding.PaddingRight = UDim.new(
             showSelector
                 and math.min(0.45, 0.034 / math.max(width, 0.001))
@@ -4686,12 +4686,12 @@ local function createLibrarySliderRow(config)
         return nil
     end
 
-    --=====================================================================
-    -- Menu chon don vi: overlay tren cung cua rootGui nen KHONG bi clip
-    -- boi Section/Page; click ra ngoai la dong; dung chung
-    -- Runtime.activeDropdownCloser nen mo dropdown khac / doi tab / dong window
-    -- deu tu dong dong menu nay.
-    --=====================================================================
+    
+    
+    
+    
+    
+    
     local unitOverlay = nil
     local unitMenu = nil
     local unitMenuList = nil
@@ -4756,8 +4756,8 @@ local function createLibrarySliderRow(config)
         unitMenu = Instance.new("Frame")
         unitMenu.Name = "UnitMenu"
         unitMenu.Active = true
-        -- KHONG co tam nen: mot khoi den dac trong rat nang va lac long.
-        -- De tung muc tu dung nhu chip cua dropdown co san trong library.
+        
+        
         unitMenu.BackgroundTransparency = 1
         unitMenu.BorderSizePixel = 0
         unitMenu.ZIndex = 151
@@ -4815,8 +4815,8 @@ local function createLibrarySliderRow(config)
             applyPlainTextStyle(item)
             addScaledStroke(item, Enum.ApplyStrokeMode.Border, 0.07)
 
-            -- TextScaled se lap day vung con lai sau padding, nen padding
-            -- chinh la thu quyet dinh co chu trong menu.
+            
+            
             local itemPadding = Instance.new("UIPadding")
             itemPadding.Name = "ItemPadding"
             itemPadding.PaddingTop = UDim.new(0.18, 0)
@@ -4845,23 +4845,23 @@ local function createLibrarySliderRow(config)
         if not (unitOverlay and unitMenu) then
             return
         end
-        -- Neo menu vao ca o gia tri (chevron qua nho de lam moc).
+        
         local chipPosition = valueLabel.AbsolutePosition
         local chipSize = valueLabel.AbsoluteSize
-        -- Toa do man hinh lay tu rootGui: overlay vua duoc tao trong cung
-        -- frame nen AbsoluteSize cua no van la 0x0 - dung no de kep menu
-        -- se day menu ra ngoai man hinh (day chinh la bug "menu khong mo").
+        
+        
+        
         local originPosition = rootGui.AbsolutePosition
         local screenSize = rootGui.AbsoluteSize
         if screenSize.X <= 0 or screenSize.Y <= 0 then
             return
         end
-        -- Muc trong menu THAP hon o gia tri; truoc day lay dung chieu cao
-        -- o nen chu TextScaled phinh to gap doi chu cua row, trong rat tho.
+        
+        
         local itemHeight = math.max(14, math.floor(chipSize.Y * 0.85 + 0.5))
         local pad = math.max(2, math.floor(itemHeight * 0.14 + 0.5))
-        -- Menu rong DUNG bang o gia tri: truoc day con cong them pad hai
-        -- ben nen menu thua ra so voi o, nhin lech han.
+        
+        
         local count = #unitOptions
         local totalWidth = math.max(math.floor(chipSize.X + 0.5), 24)
         local totalHeight = count * itemHeight
@@ -4878,8 +4878,8 @@ local function createLibrarySliderRow(config)
             end
         end
 
-        -- Can mep phai menu voi mep phai chip, kep trong man hinh; day
-        -- len tren chip neu ben duoi khong du cho.
+        
+        
         local x = chipPosition.X + chipSize.X - totalWidth
         x = math.min(
             x,
@@ -4943,11 +4943,11 @@ local function createLibrarySliderRow(config)
             ),
             { Rotation = 180 }
         ):Play()
-        -- Chip doi vi tri/kich thuoc thi menu BAM THEO chu khong dong.
-        -- Truoc day dong ngay lap tuc la bug thu hai lam menu "khong mo":
-        -- chinh chip co UIScale tween hover/press, click xong tween van
-        -- chay lam AbsoluteSize doi -> menu vua mo da tu dong. Gio chi
-        -- dong khi chip bi cuon ra khoi vung nhin cua trang.
+        
+        
+        
+        
+        
         table.insert(
             unitMenuConnections,
             valueLabel:GetPropertyChangedSignal("AbsolutePosition"):Connect(
@@ -4972,9 +4972,9 @@ local function createLibrarySliderRow(config)
         local previousName = previousUnit and previousUnit.Name or nil
         currentUnitIndex = index
 
-        -- Chuyen doi tu dong khi unit khai bao ToBase/FromBase: value va
-        -- Min/Max deu quy ve don vi goc roi doi sang don vi moi, nen thanh
-        -- keo tu chinh lai theo. Khong khai bao thi chi doi cach hien thi.
+        
+        
+        
         if previousUnit
             and previousUnit ~= nextUnit
             and (previousUnit.ToBase or nextUnit.FromBase)
@@ -5024,8 +5024,8 @@ local function createLibrarySliderRow(config)
         local showSelector = showUnit and unitSelectorEnabled
         unitButton.Visible = showSelector
         unitDivider.Visible = showSelector
-        -- Mep phai cua o va chevron luon co dinh. Chieu rong o se duoc tinh
-        -- lai tu chuoi hien tai trong refreshValueBoxGeometry().
+        
+        
         if showSelector then
             unitDivider.Position = UDim2.fromScale(0.5935, 0.5)
             unitButton.Position = UDim2.fromScale(0.618, 0.5)
@@ -5088,14 +5088,14 @@ local function createLibrarySliderRow(config)
 
     setValue = function(value, fireCallback)
         currentValue = snapValue(value)
-        -- Khong ghi de text trong luc nguoi dung dang go.
+        
         applyDisplayText()
         updateUnitDisplay()
         local alpha = 0
         if maximum > minimum then
             alpha = (currentValue - minimum) / (maximum - minimum)
         end
-        -- Giu tron handle nam tron trong track nhu slider goc.
+        
         local visualAlpha = math.clamp(alpha, 0.0575, 0.9425)
         bar.Size = UDim2.new(visualAlpha, 0, 1, 0)
         hold.Position = UDim2.new(visualAlpha, 0, 0.5, 0)
@@ -5172,9 +5172,9 @@ local function createLibrarySliderRow(config)
         if valueLabel:IsFocused() then
             refreshValueBoxGeometry(valueLabel.Text)
         end
-        -- Chi loc khi nguoi dung dang go va khong co parser rieng:
-        --  * khong focus  -> text la do code dat (da dinh dang), bo qua;
-        --  * co ValueParse -> nguoi dung duoc go ky tu tuy y, parser lo.
+        
+        
+        
         if filteringValueText
             or valueParseFn ~= nil
             or not valueLabel:IsFocused()
@@ -5217,9 +5217,9 @@ local function createLibrarySliderRow(config)
                 currentValue
             )
             if not ok then
-                -- warn(
-                --         .. tostring(parsed)
-                -- )
+                
+                
+                
             else
                 typedValue = tonumber(parsed)
             end
@@ -5241,8 +5241,8 @@ local function createLibrarySliderRow(config)
 
     valueLabel.Focused:Connect(function()
         tweenValueFocus(true)
-        -- LUON tro ve so tho: tien to, don vi va the mau bien mat trong
-        -- luc go nen nguoi dung chi co the sua phan so.
+        
+        
         filteringValueText = true
         valueLabel.RichText = false
         valueLabel.Text = formatValue(currentValue)
@@ -5312,8 +5312,8 @@ local function createLibrarySliderRow(config)
         end
     end)))
 
-    -- Khoi tao: gan thang unit mac dinh (KHONG chay chuyen doi, vi Min/Max
-    -- trong config duoc hieu la da o dung don vi mac dinh do).
+    
+    
     if unitConfig and unitConfig.Default ~= nil then
         local defaultUnitIndex = resolveUnitIndex(unitConfig.Default)
         if defaultUnitIndex then
@@ -5629,15 +5629,15 @@ local function createLibraryTextRow(config)
     }
 end
 
--- BE RONG DONG NOTE
--- Note dung TextScaled nen khung hep bao nhieu la chu nho bay nhieu. Truoc
--- day moi row deu ghim cung 0.66 nen row chi co mot cai nut hay can gat
--- (o dieu khien hep) bo phi mot mang trong ben phai va chu note bi thu nho
--- vo co.
--- Gio be rong duoc tinh TU MEP TRAI CUA CHINH O DIEU KHIEN cua row do:
---   nut / cong tac (o hep)      -> note keo dai gan het chieu ngang
---   dropdown / input / slider   -> note tu ngan lai vua du, khong de len o
--- Row khong co o dieu khien (Text, Label) thi dung tron NOTE_MAX_WIDTH.
+
+
+
+
+
+
+
+
+
 local NOTE_LEFT = 0.025
 local NOTE_GAP = 0.02
 local NOTE_MAX_WIDTH = 0.94
@@ -5744,7 +5744,7 @@ local function createLibraryButtonRow(config)
 
     return row, {
         Press = function()
-            -- Chay ca animation nhu mot lan bam that, roi moi goi Callback.
+            
             if playPress then
                 playPress()
             end
@@ -5783,8 +5783,8 @@ local function createLibraryInputRow(config)
 end
 
 local function createLibraryNoteToggleRow(config)
-    -- Tao tu cung primitive Toggle de Set() va click luon dung chung mot
-    -- state; sau do chi doi geometry thanh row co ghi chu.
+    
+    
     local row, controller = createLibraryToggleRow(config)
     local vScale = ROW_ASPECT_WITH_NOTE / ROW_ASPECT
     local aspect = row:FindFirstChildOfClass("UIAspectRatioConstraint")
@@ -5827,9 +5827,9 @@ local function createLibraryNoteToggleRow(config)
 
     switch.Size = UDim2.fromScale(0.142, 0.75 * vScale)
 
-    -- Row nay da co san dong Note; chi thieu duong doi chu luc chay. Bo
-    -- sung GetNote/SetNote vao dung controller cua Toggle, KHONG dung gi
-    -- toi hinh hoc nen bo cuc giu y nguyen.
+    
+    
+    
     local currentNote = note.Text
     controller.GetNote = function()
         return currentNote
@@ -5841,10 +5841,10 @@ local function createLibraryNoteToggleRow(config)
     return row, controller
 end
 
--- actionMode = true -> ActionDropdown / ActionMultiDropdown: menu tu mang mot
--- dong huong dan va mot nut ap dung. Callback CHI chay khi nguoi dung bam nut
--- trong menu, nen doi lua chon (hoac Set/SetOptions tu code) khong kich hoat
--- hanh dong nao. Config them: Hint = "dong huong dan", ButtonText = "chu nut".
+
+
+
+
 local function createLibraryDropdownRow(config, forceMulti, actionMode)
     local rawOptions = config.Options or config.Values or config.List
     assert(type(rawOptions) == "table", "Dropdown features must be provided as a table")
@@ -5861,8 +5861,8 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
     local options = copyOptions(rawOptions)
     local multiSelect = forceMulti == true or config.Multi == true
 
-    -- Mot bang duy nhat cho ca doi option: mountDropdown tao lai primitive
-    -- nhung Hint/ButtonText van la ban moi nhat.
+    
+    
     local actionSpec = nil
     if actionMode then
         actionSpec = {
@@ -5911,10 +5911,10 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
         return findOptionIndex(choice) or 1
     end
 
-    -- Host trong suot giu nguyen vi tri/LayoutOrder cua option. Moi lan danh
-    -- sach config doi, chi primitive dropdown GOC ben trong duoc tao lai.
-    -- Nho vay Config dung dung appearance/animation cua dropdown demo, khong
-    -- can mot component giao dien thu hai.
+    
+    
+    
+    
     local row = Instance.new("Frame")
     row.Name = config.Name
     row.Active = false
@@ -5926,9 +5926,9 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
     row.Size = UDim2.new(ROW_WIDTH_SCALE, 0, 0, 1)
     row.ZIndex = 3
 
-    -- Row nay khong co UIAspectRatioConstraint nen bindResponsiveFixedRowHeight
-    -- bo qua no; tu chia contentScale o day de dropdown thang hang voi cac
-    -- row khac khi keo to khung.
+    
+    
+    
     local function hostWidthScale()
         if RESIZE_KEEPS_OPTION_WIDTH then
             return ROW_WIDTH_SCALE / ContentScale.X
@@ -5994,18 +5994,18 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
         mountedRow:GetPropertyChangedSignal("AbsoluteSize"):Connect(
             syncHostHeight
         )
-        -- Action dropdown: Callback KHONG chay khi doi lua chon, no chi chay
-        -- luc bam nut trong menu (actionSpec.OnApply). Vi vay o che do do khong
-        -- gan listener cho tung chip.
+        
+        
+        
         for index = 1, (actionSpec and 0 or #options) do
             local item = findDescendant(mountedRow, "Option" .. index)
             connectSafeActivation(item, function()
-                -- Primitive dropdown goc cung lang nghe chinh nut nay de doi
-                -- currentIndex/selected. Neu doc ngay trong mot listener thu
-                -- hai, thu tu listener cua Roblox co the lam callback nhan
-                -- state CU va nguoi dung phai bam lan nua. De callback sang
-                -- scheduler tiep theo de ca Dropdown va MultiDropdown luon
-                -- doc selection sau khi primitive da cap nhat xong.
+                
+                
+                
+                
+                
+                
                 task.defer(function()
                     RunService.Heartbeat:Wait()
                     if serial ~= mountSerial
@@ -6034,7 +6034,7 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
         end,
         SetValue = function(value, fireCallback)
             primitiveController.SetValue(value)
-            -- O che do action, doi lua chon KHONG bao gio la mot lan "ap dung".
+            
             if fireCallback ~= false and not actionSpec then
                 safeCallback(config.Callback, primitiveController.GetValue())
             end
@@ -6054,7 +6054,7 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
         Close = function()
             closeActiveDropdown()
         end,
-        -- Ba duong duoi chi ton tai o ActionDropdown / ActionMultiDropdown.
+        
         Apply = actionSpec and function()
             primitiveController.Apply()
         end or nil,
@@ -6071,9 +6071,9 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
     }
 end
 
---=========================================================================
--- Tab pages and responsive pixel scrolling.
---=========================================================================
+
+
+
 
 local TAB_LAYOUT = {
     Span = 0.895,
@@ -6090,7 +6090,7 @@ local SECTION_HEADER_ASPECT = 16
 local sideButtonLayout = Instance.new("UIListLayout")
 sideButtonLayout.FillDirection = Enum.FillDirection.Vertical
 sideButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
--- Match the right rail exactly: both columns begin from the same top line.
+
 sideButtonLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 sideButtonLayout.SortOrder = Enum.SortOrder.LayoutOrder
 sideButtonLayout.Parent = sideButtons
@@ -6100,11 +6100,11 @@ sideButtonPadding.Name = "TabPadding"
 sideButtonPadding.PaddingTop = UDim.new(0.067, 0)
 sideButtonPadding.Parent = sideButtons
 
---=========================================================================
--- HAI COT TAB: trai (co san) va phai (moi). Cot phai la anh guong dung
--- nghia: cung be rong, cung le tren, cung khoang ho 0.025 so voi khung,
--- chi khac AnchorPoint va mep bam.
---=========================================================================
+
+
+
+
+
 local TabColumns = {}
 do
     local function buildColumn(name, anchorX, edgeX)
@@ -6158,8 +6158,8 @@ do
     TabColumns.Right.Width = 0.2612044513
 end
 
--- Cot tab nam ngoai khung nen chieu rong, khoang ho va le tren deu phai
--- chia lai; chieu cao tung nut do _reflowTabs lo.
+
+
 ContentScale.OnChanged(function(scaleX, scaleY)
     for _, column in pairs(TabColumns) do
         local gap = (column.EdgeX < 0) and (-0.025 / scaleX)
@@ -6192,9 +6192,9 @@ local function createSectionHeader(title, layoutOrder, clipViewport)
     header.BackgroundTransparency = 1
     header.BorderSizePixel = 0
     header.LayoutOrder = layoutOrder
-    -- Chieu cao se duoc cap nhat bang pixel tu width cua Section. Khong
-    -- dung UIAspectRatioConstraint o day vi Section container khoi tao Y=0
-    -- se lam FitWithinMaxSize ep header ve gan 0px.
+    
+    
+    
     header.Size = UDim2.new(0.97, 0, 0, 36)
     header.Text = title
     header.TextWrapped = true
@@ -6204,8 +6204,8 @@ local function createSectionHeader(title, layoutOrder, clipViewport)
 
     applyShinyTextStyle(header, normalTextFont)
 
-    -- Outer wrapper stays unrotated so the scrolling viewport can clip the
-    -- section arrow correctly at the top and bottom edges.
+    
+    
     local arrowClip = Instance.new("Frame")
     arrowClip.Name = "ArrowClip"
     arrowClip.Active = false
@@ -6296,8 +6296,8 @@ local function createSectionHeader(title, layoutOrder, clipViewport)
         local textWidth = math.min(header.TextBounds.X, width)
         local reach = size * visualHalfWidth
         local centerX = (width - textWidth) / 2 - spacing - reach
-        -- The wrapper includes enough transparent margin for the existing
-        -- outline and rotation without changing the visible arrow size.
+        
+        
         arrowClip.Size = UDim2.fromOffset(size * 1.35, size * 1.35)
         arrowClip.Position = UDim2.new(
             0,
@@ -6362,8 +6362,8 @@ local function createSectionHeader(title, layoutOrder, clipViewport)
     return header, arrow, button
 end
 
---=========================================================================
---=========================================================================
+
+
 
 local WindowMethods = {}
 local TabMethods = {}
@@ -6374,11 +6374,11 @@ local ExclusiveGroupMethods = {}
 local ApiImpl = {}
 Runtime.optionChangedHook = nil
 Runtime.stateChangedHook = nil
--- Bao cho cac he khac (vi du Quick) biet config vua duoc load xong, de ve
--- lai UI. Config load bang Set(value, false) nen Subscribe khong chay.
+
+
 Runtime.configLoadedHook = nil
--- He Quick (ghim ra man hinh + keybind) gan vao day de biet khi ten hien
--- thi cua mot option doi thi phai ve lai thanh ghim.
+
+
 Runtime.quickRefreshHook = nil
 
 WindowMethods.__index = WindowMethods
@@ -6542,8 +6542,8 @@ ApiImpl[1] = function(self, value, transaction, sourceOption)
     if transaction.steps >= MAX_STATE_TRANSACTION_STEPS then
         if not transaction.warned then
             transaction.warned = true
-            -- warn(
-            -- )
+            
+            
         end
         return false
     end
@@ -6957,7 +6957,7 @@ ApiImpl[16] = function(self,
     fireCallback
 )
     while ApiImpl[14](self) > self.MaxActive do
-        -- Giu option vua bat, uu tien tat lua chon cu nhat.
+        
         local oldestState = ApiImpl[15](self, preferredState)
             or ApiImpl[15](self, nil)
         if not oldestState then
@@ -7298,20 +7298,20 @@ local function dependencyMatches(dependency)
     return linkedValuesEqual(value, dependency.Expected)
 end
 
--- Visibility CASCADES down a chain, it is not just a value test.
---
--- Auto Get > Show Bar > Show Distance Meter is the case that exposed this.
--- The distance row only checked Show Bar's VALUE, so with Show Bar left on
--- and Auto Get switched off, Show Bar disappeared while its own child stayed
--- on screen - a child hanging under a parent that is not there.
---
--- So a dependency now fails on either count: the source's value not matching,
--- OR the source itself being hidden. That makes a chain of any depth behave
--- the way people read it, without every link having to repeat its ancestors'
--- conditions.
---
--- `seen` guards against a cycle (A depends on B, B on A) turning this into
--- infinite recursion.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local function resolvedOptionVisibility(option, seen)
     if option._manualVisible == false then
         return false
@@ -7337,10 +7337,10 @@ local function resolvedOptionVisibility(option, seen)
 end
 
 ApiImpl[43] = function(self)
-    -- A dependency child keeps the exact same row style, but uses a slightly
-    -- narrower host. This is the only hierarchy cue: no extra line/icon/frame.
-    --
-    -- growing a second indent mechanism beside it, so a row that is both a
+    
+    
+    
+    
     local hostWidth = #(self._visibilityDependencies or {}) > 0 and 0.96 or 1
     if self._subOfParent then
         hostWidth = 0.9
@@ -7423,14 +7423,14 @@ ApiImpl[44] = function(self, animated)
     local visible = resolvedOptionVisibility(self)
     self._resolvedVisible = visible
 
-    -- Pass the change down the chain. Children subscribe to this option's
-    -- STATE, and hiding a row does not change its value, so nothing would
-    -- otherwise tell them their parent just left the screen. Done before the
-    -- early returns below, which are about this row's own drawing and would
-    -- swallow the notification.
-    --
-    -- Only on an actual change, and with a flag against re-entry, so a deep
-    -- chain settles in one pass instead of each level re-walking the rest.
+    
+    
+    
+    
+    
+    
+    
+    
     if previous ~= visible and not self._cascadingVisibility then
         self._cascadingVisibility = true
         for _, dependency in ipairs(self._visibilityDependents or {}) do
@@ -7450,8 +7450,8 @@ ApiImpl[44] = function(self, animated)
         return self
     end
 
-    -- Search temporarily owns visibility, but the CollapsibleContent host still
-    -- remembers the dependency result to restore when search ends.
+    
+    
     if self._preSearchVisible ~= nil then
         self._preSearchVisible = visible
         host.Visible = self._searchMatched == true and visible
@@ -7489,8 +7489,8 @@ ApiImpl[44] = function(self, animated)
     )
 
     if visible then
-        -- Same ordering as Section:SetExpanded: make content visible first,
-        -- then let UIListLayout follow the host height every tween frame.
+        
+        
         host.Visible = true
     end
     if animated == false then
@@ -7550,10 +7550,10 @@ ApiImpl[46] = function(self)
     return visibilityObject.Visible == true
 end
 
---
---
--- A child may also be linked after creation:
--- master:ShowOptions(childA, childB)
+
+
+
+
 ApiImpl[47] = function(self, source, options)
     assertObject(self, "Option")
     options = type(options) == "table" and options or {}
@@ -7588,9 +7588,9 @@ ApiImpl[47] = function(self, source, options)
             and options.Predicate
             or nil,
         Source = sourceState,
-        -- Kept alongside the State so resolvedOptionVisibility can ask whether
-        -- the source ROW is on screen, not only what its value is. A State on
-        -- its own has no row, and then this is simply nil.
+        
+        
+        
         SourceOption = sourceOption
             and sourceOption._kind == "Option"
             and sourceOption
@@ -7624,21 +7624,21 @@ end
 
 
 
---
---
--- master:SubOptions(childA, childB)   -- same thing, after the fact
---
--- visibility link at all. The child sits under its parent, drawn narrower
--- and shorter so it reads as belonging to it, and stays on screen whether
--- the parent toggle is on or off.
---
--- Which to reach for:
---              (a speed slider under a Speed Boost toggle).
---              (jump height, which you want to set BEFORE switching on).
---
---
--- Order comes from creation order, as everywhere else in a Section, so
--- write the child immediately after its parent.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ApiImpl[48] = function(self, source)
     assertObject(self, "Option")
     if type(source) == "string" then
@@ -7655,10 +7655,10 @@ ApiImpl[48] = function(self, source)
     source._subOptions = source._subOptions or {}
     table.insert(source._subOptions, self)
 
-    -- Shorter row. AspectRatio is width over height, so a BIGGER ratio makes
-    -- a shallower row: 1.16 takes about a seventh off the height. Enough to
-    -- read as subordinate at a glance, not so much that the control inside
-    -- otherwise shrink the row twice.
+    
+    
+    
+    
     if not self._subAspectApplied then
         local aspect = self.Instance
             and self.Instance:FindFirstChildOfClass("UIAspectRatioConstraint")
@@ -7668,9 +7668,9 @@ ApiImpl[48] = function(self, source)
         end
     end
 
-    -- Builds the host if this row has not needed one yet, and applies the
-    -- narrower width from _EnsureVisibilityHost. With no dependencies
-    -- attached, resolvedOptionVisibility stays true, so nothing is hidden.
+    
+    
+    
     ApiImpl[44](self, false)
     return self
 end
@@ -7797,9 +7797,9 @@ ApiImpl[61] = function(self, increment, fireCallback)
     return self
 end
 
---=========================================================================
--- Unit / dinh dang o nhap cua Slider - Slidebar.
---=========================================================================
+
+
+
 
 ApiImpl[62] = function(self)
     assertObject(self, "Option")
@@ -7895,8 +7895,8 @@ ApiImpl[73] = function(self, enabled)
     return self
 end
 
---=========================================================================
---=========================================================================
+
+
 
 ApiImpl[74] = function(self)
     assertObject(self, "Option")
@@ -7954,9 +7954,9 @@ ApiImpl[81] = function(self)
     return self
 end
 
--- Ba method duoi day danh cho ActionDropdown / ActionMultiDropdown.
--- Apply() = bam ho nut trong menu: dong menu roi chay Callback voi lua chon
--- dang co, dung y nhu nguoi dung tu bam.
+
+
+
 ApiImpl[82] = function(self)
     assertObject(self, "Option")
     local apply = self._controller.Apply
@@ -8067,8 +8067,8 @@ local function addRowToSection(section, optionType, row, controller)
     row.LayoutOrder = section._nextOptionOrder
     row.Parent = section._content
     local cleanupResponsive = bindResponsiveFixedRowHeight(section, row)
-    -- Aspect/layout cua row thuong duoc Roblox tinh sau khi Parent. Lang nghe
-    -- kich thuoc that de section mot option van mo dung ngay lan dau.
+    
+    
     local rowSizeConnection = row:GetPropertyChangedSignal("AbsoluteSize"):Connect(
         section._refreshHeight
     )
@@ -8115,9 +8115,7 @@ local ACTION_OPTION_TYPES = { [4] = true, [5] = true }
 
 ApiImpl[86] = function(self, optionType, config)
     assertObject(self, "Section")
-    local normalizedType = tostring(optionType)
-        :lower()
-        :gsub("[%s_%-]", "")
+    local typeCode, normalizedType = Runtime[101](optionType)
     local isActionOption = ACTION_OPTION_TYPES[typeCode] == true
     local factory = optionFactories[typeCode]
     assert(factory, ("Unsupported feature type: %s"):format(optionType))
@@ -8169,10 +8167,10 @@ ApiImpl[86] = function(self, optionType, config)
             ) == true
         end
 
-        -- Transaction chi ban callback cho state THUC SU doi gia tri. Voi
-        -- option hanh dong, bam nut ma khong doi lua chon thi khong co gi
-        -- doi -> callback bi nuot. Kiem tra dung truong hop transaction da
-        -- ban roi, con lai thi tu goi o day.
+        
+        
+        
+        
         local firedByState = stateChanged
             and optionHandle ~= nil
             and optionHandle.State ~= nil
@@ -8200,7 +8198,7 @@ ApiImpl[86] = function(self, optionType, config)
             Runtime.optionChangedHook(optionHandle)
         end
     end
-    -- DisplayName chi doi chu nguoi dung nhin thay. row.Name duoc tra ve
+    
     local rowConfig = optionConfig
     if optionConfig.DisplayName ~= nil then
         rowConfig = copyTable(optionConfig)
@@ -8218,18 +8216,18 @@ ApiImpl[86] = function(self, optionType, config)
         optionConfig.DisplayName or optionConfig.Name
     )
     optionHandle._userCallback = userCallback
-    -- Giu lai config goc de dung lai row nay o cho khac (ket qua tim kiem
-    -- lien tab). Dropdown can Options, Slider can Min/Max, khong luu lai thi
-    -- khong dung lai duoc dung kieu row.
+    
+    
+    
     optionHandle._sourceConfig = optionConfig
-    -- Metadata cho he Quick. Deu la tuy chon:
-    --   QuickName    = ten hien tren nut ghim (mac dinh lay Name)
-    --   Pin          = true -> mac dinh duoc tick san trong danh sach ghim
-    --   Keybind      = Enum.KeyCode hoac ten phim -> keybind mac dinh
-    --   Quick        = false -> khong cho option nay ghim / gan phim.
-    --                   Mac dinh la true. Button/Toggle/Switch co Pin + Key;
-    --                   Slider/Input chi co Pin, khong co keybind.
-    --                   QuickIgnore la ten cu, van dung duoc.
+    
+    
+    
+    
+    
+    
+    
+    
     optionHandle._quickName = optionConfig.QuickName
         and tostring(optionConfig.QuickName)
         or nil
@@ -8240,9 +8238,9 @@ ApiImpl[86] = function(self, optionType, config)
     optionHandle._quickKeyDefault = optionConfig.Keybind
     optionHandle._quickIgnored = optionConfig.QuickIgnore == true
         or optionConfig.Quick == false
-    -- KeybindGroup = "ten" -> ep may option vao cung mot nhom keybind du
-    -- chung khong he lien ket qua State/Link/ExclusiveGroup. Khong khai bao
-    -- thi quan he duoc suy ra tu dong (xem he Quick).
+    
+    
+    
     optionHandle._keybindGroup = optionConfig.KeybindGroup ~= nil
         and tostring(optionConfig.KeybindGroup)
         or nil
@@ -8271,8 +8269,8 @@ ApiImpl[86] = function(self, optionType, config)
         )
     end
 
-    -- Conditional child Features keep their normal source/LayoutOrder. They
-    -- are only hidden until the linked Toggle/Switch (or State) matches.
+    
+    
     local visibilitySource = optionConfig.ShowWhen
         or optionConfig.DependsOn
         or optionConfig.VisibleWhen
@@ -8294,7 +8292,7 @@ ApiImpl[86] = function(self, optionType, config)
         ApiImpl[47](optionHandle, visibilitySource, visibilityOptions)
     end
 
-    -- indent, which is the wider of the two cues.
+    
     local subSource = optionConfig.SubOf
         or optionConfig.ChildOf
         or optionConfig.Under
@@ -8309,10 +8307,10 @@ end
 
 
 
--- Dropdown "chon roi bam": Hint la dong huong dan trong menu, ButtonText la
--- chu tren nut, va Callback chi chay khi nguoi dung bam nut do.
 
--- Ban nhieu lua chon: Callback nhan mot bang ten (co the rong neu chua tick).
+
+
+
 
 
 
@@ -8357,14 +8355,14 @@ ApiImpl[87] = function(self, expanded, animated)
         self._arrowTween:Cancel()
     end
 
-    -- Chi cat noi dung trong luc section dang co/gian. Khi da mo xong,
-    -- tat clipping de UIStroke.Position = Outer cua option dau tien khong bi
-    -- mat vai pixel o canh tren.
+    
+    
+    
     self._group.ClipsDescendants = true
 
     if expanded then
-        -- UIListLayout bo qua GuiObject Visible=false. Bat lai truoc khi
-        -- tween de container Section no ra cung content.
+        
+        
         self._group.Visible = true
     end
 
@@ -8476,15 +8474,15 @@ ApiImpl[90] = function(self, config)
 
     self._nextSectionOrder = self._nextSectionOrder + 1
 
-    -- Mot container that trong GUI hierarchy:
-    -- Section
-    --   Header
-    --   CollapsibleContent
-    --     Content
-    --       Option...
-    --
-    -- Page chi layout cac Section container, khong layout Header va options
-    -- thanh nhung sibling roi nua.
+    
+    
+    
+    
+    
+    
+    
+    
+    
     local container = Instance.new("Frame")
     container.Name = sectionConfig.Name .. "Section"
     container.Active = false
@@ -8649,9 +8647,9 @@ ApiImpl[90] = function(self, config)
         end)
     end
 
-    -- UIListLayout co the phat AbsoluteContentSize trong luc mot lan refresh
-    -- dang cho task.defer. Khong duoc bo qua tin hieu do: section chi co mot
-    -- option se khong con tin hieu ke tiep va CollapsibleContent bi ket o 0px.
+    
+    
+    
     local heightRefreshQueued = false
     local heightRefreshAgain = false
     section._measureExpandedHeight = function()
@@ -8722,17 +8720,17 @@ ApiImpl[90] = function(self, config)
                 heightRefreshQueued = false
                 return
             end
-            -- Dang chay animation dong/mo thi HOAN lai chu KHONG bo. Bo han
-            -- chinh la loi lan dau execute: cac section vua dung xong thi
-            -- playOpenAnimation() bat co, moi yeu cau do lai bi vut sach nen
-            -- option bi nho, phai bam lai tab moi chiu tinh dung.
+            
+            
+            
+            
             if Runtime.windowAnimating then
                 heightRefreshQueued = false
                 task.delay(0.12, section._refreshHeight)
                 return
             end
-            -- Tab dang an thi bo qua that, vi luc chon tab se co
-            -- _refreshLayout() ep tinh lai.
+            
+            
             if not section.Tab.Page.Visible then
                 heightRefreshQueued = false
                 return
@@ -8746,7 +8744,7 @@ ApiImpl[90] = function(self, config)
         end)
     end
 
-    -- Goi khi tab duoc chon: ep tinh lai toan bo do dai da bi bo qua luc an.
+    
     section._refreshLayout = function()
         if section._destroyed then
             return
@@ -8864,10 +8862,10 @@ ApiImpl[93] = function(self)
     if count == 0 then
         return
     end
-    -- Khung cao gap N lan thi cot tab cung chua duoc gap N lan so nut o
-    -- kich thuoc goc, nen phan "cho trong" duoc nhan len truoc khi chia.
+    
+    
     local scale = ContentScale.Y
-    -- Moi cot tab (trai / phai) duoc tinh rieng theo so nut cua chinh no.
+    
     for _, column in pairs(TabColumns) do
         local columnTabs = {}
         for _, tab in ipairs(self.Tabs) do
@@ -8966,7 +8964,7 @@ ApiImpl[95] = function(self, config)
         page.Parent = mainFrame
     end
 
-    -- Side = "Right" de day tab sang cot ben phai; mac dinh la cot trai.
+    
     local side = tostring(tabConfig.Side or "Left")
     local column = TabColumns[side] or TabColumns.Left
     local tabDisplayName = tostring(tabConfig.DisplayName or tabConfig.Name)
@@ -9101,7 +9099,7 @@ ApiImpl[102] = function(self)
         end
         local tab = self.SelectedTab
         if tab and not tab._destroyed then
-            -- Chi do lai mot lan sau khi tween da dung han.
+            
             for _, section in ipairs(tab.Sections) do
                 if section._refreshLayout then
                     section._refreshLayout()
@@ -9235,15 +9233,15 @@ end
 
 
 
---=========================================================================
--- GITHUB LIBRARY FINALIZATION
---=========================================================================
+
+
+
 
 
 (function()
 local U0 = "https://raw.githubusercontent.com/tienkhanh1/spicy/refs/heads/main/ChilliLibraryEngine"
 local B0 = {
-    [1] = 0x43534832,
+    [1] = 0x43534833,
     [2] = Protected, [3] = Runtime,
     [4] = UserInputService, [5] = TweenService, [6] = RunService,
     [7] = OWNER_ATTRIBUTE, [8] = parent, [9] = objects,
@@ -9272,7 +9270,8 @@ local F0, E0 = loadstring(S0)
 assert(F0, E0)
 local O0, I0 = pcall(F0)
 assert(O0 and type(I0) == "function", tostring(I0))
-local O1, R1 = pcall(I0, B0)
-assert(O1 and R1 == 0x51C71A9, tostring(R1))
+local O1, R1 = pcall(I0, B0, C0)
+assert(O1 and R1 == 0x51C71AA, tostring(R1))
 end)()
 return ChilliLibrary
+end
