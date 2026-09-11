@@ -837,6 +837,10 @@ if sourceLeftCenterScreen then
         launcherGui.ClipToDeviceSafeArea = sourceLeftCenterScreen.ClipToDeviceSafeArea
     end)
 end
+local gameId = game.GameId
+if gameId ~= 7709344486 then
+    launcherGui.Enabled = false
+end
 launcherGui.Parent = parent
 
 local launcherRoot = Instance.new("Frame")
