@@ -8099,7 +8099,1082 @@ local function addRowToSection(section, optionType, row, controller)
     return createOptionHandle(section, optionType, row, controller)
 end
 
+local createLibraryParagraphRow = (function()
+    local DEFAULT_STYLE = {
+        TextScale = 1,
+        TitleScale = 1,
+        Font = "Gotham",
+        LineHeight = 1.16,
+        Padding = 1,
+        Alignment = "Left",
+        BackgroundTransparency = 0.5,
+        TextColor = Color3.fromRGB(235, 235, 235),
+        TextStrokeTransparency = 0.7,
+        GroupColor = Color3.fromRGB(58, 255, 55),
+        GroupSpacing = true,
+        MaxLines = 0,
+        ImageLines = 2.3,
+        ItemSpacing = 0.35,
+        SpotlightLines = 5,
+    }
+
+    local BODY_RATIO = 0.026
+    local SPIN_RATE = 20
+    local SPIN_SPEED = math.rad(28)
+    local VISIBILITY_CHECK = 0.5
+
+    local SELECTED_COLOR = Color3.fromRGB(58, 255, 55)
+    local HOVER_COLOR = Color3.fromRGB(255, 255, 255)
+    local DEFAULT_IMAGE_COLOR = Color3.fromRGB(90, 90, 110)
+
+    local FONTS = {
+        ["gotham"] = normalTextFont,
+        ["gotham medium"] = Font.new(
+            "rbxasset://fonts/families/GothamSSm.json",
+            Enum.FontWeight.Medium,
+            Enum.FontStyle.Normal
+        ),
+        ["fredoka"] = Font.new(
+            "rbxasset://fonts/families/FredokaOne.json",
+            Enum.FontWeight.Regular,
+            Enum.FontStyle.Normal
+        ),
+        ["code"] = Font.new(
+            "rbxasset://fonts/families/RobotoMono.json",
+            Enum.FontWeight.Bold,
+            Enum.FontStyle.Normal
+        ),
+    }
+
+    local ALIGNMENTS = {
+        left = Enum.TextXAlignment.Left,
+        center = Enum.TextXAlignment.Center,
+        right = Enum.TextXAlignment.Right,
+    }
+
+    local function resolveFont(value)
+        if typeof(value) == "Font" then
+            return value
+        end
+        if typeof(value) == "EnumItem" then
+            local ok, font = pcall(Font.fromEnum, value)
+            if ok then
+                return font
+            end
+        end
+        return FONTS[string.lower(tostring(value))] or normalTextFont
+    end
+
+    local function mergeStyle(style, patch)
+        if type(patch) ~= "table" then
+            return
+        end
+        for key, value in pairs(patch) do
+            if DEFAULT_STYLE[key] ~= nil then
+                style[key] = value
+            end
+        end
+    end
+
+    local function toHex(color, fallback)
+        if typeof(color) == "Color3" then
+            return "#" .. color:ToHex()
+        end
+        if type(color) == "string" and color ~= "" then
+            return color
+        end
+        return fallback
+    end
+
+    local function toColor3(value, fallback)
+        if typeof(value) == "Color3" then
+            return value
+        end
+        if type(value) == "string" then
+            local ok, color = pcall(Color3.fromHex, value)
+            if ok then
+                return color
+            end
+        end
+        return fallback
+    end
+
+    local function escapeText(text)
+        return (string.gsub(tostring(text), "[<>&]", {
+            ["<"] = "&lt;",
+            [">"] = "&gt;",
+            ["&"] = "&amp;",
+        }))
+    end
+
+    local function plainText(text)
+        local plain = string.gsub(tostring(text), "<[^>]*>", "")
+        plain = string.gsub(plain, "&lt;", "<")
+        plain = string.gsub(plain, "&gt;", ">")
+        plain = string.gsub(plain, "&amp;", "&")
+        return string.lower(plain)
+    end
+
+    local function splitLines(text)
+        local lines = {}
+        for line in string.gmatch(tostring(text) .. "\n", "(.-)\n") do
+            table.insert(lines, { Text = line })
+        end
+        return lines
+    end
+
+    local function normalizeItem(item)
+        if type(item) == "table" then
+            return {
+                Text = tostring(item.Text or ""),
+                Image = item.Image ~= nil and tostring(item.Image) or nil,
+                ImageColor = item.ImageColor,
+                Id = item.Id,
+            }
+        end
+        return { Text = tostring(item) }
+    end
+
+    local function normalizeItems(items)
+        local list = {}
+        if type(items) == "table" then
+            for _, item in ipairs(items) do
+                table.insert(list, normalizeItem(item))
+            end
+        end
+        return list
+    end
+
+    local function normalizeGroups(groups)
+        local list = {}
+        if type(groups) == "table" then
+            for _, group in ipairs(groups) do
+                if type(group) == "table" then
+                    table.insert(list, {
+                        Title = tostring(group.Title or group.Name or ""),
+                        Color = group.Color,
+                        Items = normalizeItems(group.Items),
+                    })
+                end
+            end
+        end
+        return list
+    end
+
+    local function cloneForViewport(template)
+        if typeof(template) ~= "Instance" then
+            return nil
+        end
+        local ok, copy = pcall(function()
+            return template:Clone()
+        end)
+        if not ok or not copy then
+            return nil
+        end
+        for _, descendant in ipairs(copy:GetDescendants()) do
+            if descendant:IsA("LuaSourceContainer")
+                or descendant:IsA("ParticleEmitter")
+                or descendant:IsA("Trail")
+                or descendant:IsA("Beam")
+                or descendant:IsA("Light")
+                or descendant:IsA("Sound")
+                or descendant:IsA("Fire")
+                or descendant:IsA("Smoke")
+                or descendant:IsA("Sparkles")
+            then
+                descendant:Destroy()
+            elseif descendant:IsA("BasePart") then
+                descendant.Anchored = true
+                descendant.CanCollide = false
+                descendant.CastShadow = false
+            end
+        end
+        if copy:IsA("BasePart") then
+            copy.Anchored = true
+        end
+        return copy
+    end
+
+    local function isShown(gui)
+        if not gui:IsDescendantOf(game) then
+            return false
+        end
+        local node = gui
+        while node do
+            if node:IsA("GuiObject") and not node.Visible then
+                return false
+            end
+            if node:IsA("LayerCollector") then
+                return node.Enabled
+            end
+            node = node.Parent
+        end
+        return false
+    end
+
+    local function makeCorner(parent)
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 4)
+        corner.Parent = parent
+        return corner
+    end
+
+    local function makeFixedStroke(parent, color)
+        local stroke = Instance.new("UIStroke")
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        stroke.Color = color
+        stroke.LineJoinMode = Enum.LineJoinMode.Round
+        stroke.Thickness = 1
+        stroke.Parent = parent
+        return stroke
+    end
+
+    local function createLibraryParagraphRow(config)
+        local style = {}
+        for key, value in pairs(DEFAULT_STYLE) do
+            style[key] = value
+        end
+        mergeStyle(style, config.Style)
+
+        local content = {
+            Title = config.Title ~= nil and tostring(config.Title) or tostring(config.Name),
+            ShowTitle = config.ShowTitle ~= false,
+            Header = config.Header ~= nil and tostring(config.Header) or "",
+            Text = "",
+            Items = {},
+            Groups = nil,
+            SearchEnabled = config.Search == true,
+            SearchPlaceholder = tostring(config.SearchPlaceholder or "Search..."),
+            Query = "",
+            Selected = config.Selected,
+            Spotlight = nil,
+        }
+        if type(config.Groups) == "table" then
+            content.Groups = normalizeGroups(config.Groups)
+        elseif type(config.Items) == "table" then
+            content.Items = normalizeItems(config.Items)
+        else
+            content.Text = tostring(config.Text or config.Value or "")
+            content.Items = splitLines(content.Text)
+        end
+        local onItemClick = type(config.OnItemClick) == "function" and config.OnItemClick or nil
+
+        local row = createLibraryTextRow({
+            Name = config.Name,
+            Text = content.Title,
+        })
+        local labelAspect = row:FindFirstChildOfClass("UIAspectRatioConstraint")
+        if labelAspect then
+            labelAspect:Destroy()
+        end
+        row:SetAttribute("ChilliResponsiveAspect", nil)
+        row.ClipsDescendants = false
+        row.Size = UDim2.new(ROW_WIDTH_SCALE, 0, 0, 1)
+
+        local main = row:FindFirstChild("Main")
+        local title = main:FindFirstChild("Label")
+        local plateStroke = main:FindFirstChildOfClass("UIStroke")
+        main.ClipsDescendants = true
+        title.AnchorPoint = Vector2.new(0, 0)
+
+        local function hostWidthScale()
+            if RESIZE_KEEPS_OPTION_WIDTH then
+                return ROW_WIDTH_SCALE / ContentScale.X
+            end
+            return ROW_WIDTH_SCALE
+        end
+
+        local searchField = Instance.new("Frame")
+        searchField.Name = "SearchField"
+        searchField.Active = false
+        searchField.AnchorPoint = Vector2.new(0.5, 0.5)
+        searchField.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        searchField.BackgroundTransparency = 0.6
+        searchField.BorderSizePixel = 0
+        searchField.Visible = false
+        searchField.ZIndex = 4
+        searchField.Parent = main
+        addScaledStroke(searchField, Enum.ApplyStrokeMode.Border, 0.1)
+
+        local searchUnderline = Instance.new("Frame")
+        searchUnderline.Name = "Underline"
+        searchUnderline.Active = false
+        searchUnderline.AnchorPoint = Vector2.new(0.5, 1)
+        searchUnderline.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        searchUnderline.BorderSizePixel = 0
+        searchUnderline.Position = UDim2.fromScale(0.5, 1)
+        searchUnderline.Size = UDim2.fromScale(0, 0.11)
+        searchUnderline.ZIndex = 6
+        searchUnderline.Parent = searchField
+
+        local searchBox = Instance.new("TextBox")
+        searchBox.Name = "SearchInput"
+        searchBox.Active = true
+        searchBox.AnchorPoint = Vector2.new(0.5, 0.5)
+        searchBox.BackgroundTransparency = 1
+        searchBox.BorderSizePixel = 0
+        searchBox.ClearTextOnFocus = false
+        searchBox.MultiLine = false
+        searchBox.Position = UDim2.fromScale(0.5, 0.5)
+        searchBox.Size = UDim2.fromScale(0.9, 0.56)
+        searchBox.Text = ""
+        searchBox.PlaceholderText = content.SearchPlaceholder
+        searchBox.PlaceholderColor3 = Color3.fromRGB(198, 198, 198)
+        searchBox.TextXAlignment = Enum.TextXAlignment.Center
+        searchBox.TextYAlignment = Enum.TextYAlignment.Center
+        searchBox.ZIndex = 5
+        searchBox.Parent = searchField
+        applyPlainTextStyle(searchBox)
+
+        local function tweenSearchFocus(focused)
+            TweenService:Create(searchField, TweenInfo.new(0.16), {
+                BackgroundTransparency = focused and 0.42 or 0.6,
+            }):Play()
+            TweenService:Create(
+                searchUnderline,
+                TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+                { Size = UDim2.fromScale(focused and 1 or 0, 0.11) }
+            ):Play()
+        end
+
+        local spotFrame = Instance.new("Frame")
+        spotFrame.Name = "Spotlight"
+        spotFrame.Active = false
+        spotFrame.BackgroundTransparency = 1
+        spotFrame.BorderSizePixel = 0
+        spotFrame.Visible = false
+        spotFrame.ZIndex = 5
+        spotFrame.Parent = main
+
+        local spotView = Instance.new("ViewportFrame")
+        spotView.Name = "Model"
+        spotView.Ambient = Color3.fromRGB(170, 170, 180)
+        spotView.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        spotView.BackgroundTransparency = 0.45
+        spotView.BorderSizePixel = 0
+        spotView.LightColor = Color3.fromRGB(255, 255, 255)
+        spotView.LightDirection = Vector3.new(-0.6, -1, -0.4)
+        spotView.ZIndex = 6
+        spotView.Parent = spotFrame
+        local spotCorner = makeCorner(spotView)
+        local spotStroke = makeFixedStroke(spotView, DEFAULT_IMAGE_COLOR)
+
+        local spotCamera = Instance.new("Camera")
+        spotCamera.FieldOfView = 40
+        spotCamera.Parent = spotView
+        spotView.CurrentCamera = spotCamera
+
+        local spotText = Instance.new("TextLabel")
+        spotText.Name = "Info"
+        spotText.Active = false
+        spotText.BackgroundTransparency = 1
+        spotText.BorderSizePixel = 0
+        spotText.RichText = true
+        spotText.Text = ""
+        spotText.TextScaled = false
+        spotText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        spotText.TextWrapped = true
+        spotText.TextXAlignment = Enum.TextXAlignment.Left
+        spotText.TextYAlignment = Enum.TextYAlignment.Center
+        spotText.ZIndex = 6
+        spotText.Parent = spotFrame
+
+        local viewport = Instance.new("ScrollingFrame")
+        viewport.Name = "BodyViewport"
+        viewport.Active = true
+        viewport.BackgroundTransparency = 1
+        viewport.BorderSizePixel = 0
+        viewport.CanvasSize = UDim2.new()
+        viewport.ElasticBehavior = Enum.ElasticBehavior.Never
+        viewport.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
+        viewport.ScrollBarImageTransparency = 0
+        viewport.ScrollingDirection = Enum.ScrollingDirection.Y
+        viewport.ZIndex = 5
+        viewport.Parent = main
+
+        local destroyed = false
+        local titleDirty = true
+        local searchDirty = true
+        local contentDirty = true
+        local layoutDirty = true
+        local selectionDirty = false
+        local spotlightDirty = false
+        local lastWidth = -1
+
+        local rows = {}
+        local specs = {}
+
+        local function trimmedQuery()
+            if not content.SearchEnabled then
+                return ""
+            end
+            return string.lower(string.match(content.Query, "^%s*(.-)%s*$") or "")
+        end
+
+        local function matches(text, query)
+            return query == "" or string.find(plainText(text), query, 1, true) ~= nil
+        end
+
+        local function paintRow(record)
+            local spec = record.Spec
+            local isItem = spec ~= nil and spec.Kind == "item"
+            if isItem and spec.Id ~= nil and spec.Id == content.Selected then
+                record.Frame.BackgroundColor3 = SELECTED_COLOR
+                record.Frame.BackgroundTransparency = 0.86
+            elseif isItem and record.Hovered and onItemClick then
+                record.Frame.BackgroundColor3 = HOVER_COLOR
+                record.Frame.BackgroundTransparency = 0.93
+            else
+                record.Frame.BackgroundTransparency = 1
+            end
+        end
+
+        local function newRow()
+            local frame = Instance.new("Frame")
+            frame.Name = "Entry"
+            frame.Active = false
+            frame.BackgroundColor3 = HOVER_COLOR
+            frame.BackgroundTransparency = 1
+            frame.BorderSizePixel = 0
+            frame.ZIndex = 6
+            frame.Parent = viewport
+            local corner = makeCorner(frame)
+
+            local image = Instance.new("ImageLabel")
+            image.Name = "Icon"
+            image.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            image.BackgroundTransparency = 0.45
+            image.BorderSizePixel = 0
+            image.ScaleType = Enum.ScaleType.Fit
+            image.Visible = false
+            image.ZIndex = 7
+            image.Parent = frame
+            local imageCorner = makeCorner(image)
+            local imageStroke = makeFixedStroke(image, DEFAULT_IMAGE_COLOR)
+
+            local label = Instance.new("TextLabel")
+            label.Name = "Text"
+            label.Active = false
+            label.BackgroundTransparency = 1
+            label.BorderSizePixel = 0
+            label.RichText = true
+            label.Text = ""
+            label.TextScaled = false
+            label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+            label.TextWrapped = true
+            label.TextYAlignment = Enum.TextYAlignment.Top
+            label.ZIndex = 7
+            label.Parent = frame
+
+            local button = Instance.new("TextButton")
+            button.Name = "Hit"
+            button.AutoButtonColor = false
+            button.BackgroundTransparency = 1
+            button.BorderSizePixel = 0
+            button.Size = UDim2.fromScale(1, 1)
+            button.Text = ""
+            button.Visible = false
+            button.ZIndex = 8
+            button.Parent = frame
+
+            local record = {
+                Frame = frame,
+                Corner = corner,
+                Image = image,
+                ImageCorner = imageCorner,
+                ImageStroke = imageStroke,
+                Label = label,
+                Button = button,
+                Text = nil,
+                ImageId = nil,
+                MeasuredWidth = -1,
+                MeasuredKey = nil,
+                MeasuredHeight = 0,
+                Hovered = false,
+                Spec = nil,
+            }
+
+            button.MouseEnter:Connect(function()
+                record.Hovered = true
+                paintRow(record)
+            end)
+            button.MouseLeave:Connect(function()
+                record.Hovered = false
+                paintRow(record)
+            end)
+            button.Activated:Connect(function()
+                local spec = record.Spec
+                if spec and spec.Kind == "item" and spec.Id ~= nil then
+                    content.Selected = spec.Id
+                    selectionDirty = true
+                    if onItemClick then
+                        pcall(onItemClick, spec.Id, spec.Source)
+                    end
+                end
+            end)
+            return record
+        end
+
+        local function composeSpecs()
+            local query = trimmedQuery()
+            local list = {}
+            local shown = 0
+
+            if content.Header ~= "" then
+                table.insert(list, { Kind = "header", Text = content.Header })
+            end
+
+            local function pushItem(item)
+                table.insert(list, {
+                    Kind = "item",
+                    Text = item.Text,
+                    Image = item.Image,
+                    ImageColor = item.ImageColor,
+                    Id = item.Id,
+                    Source = item,
+                })
+                shown += 1
+            end
+
+            if content.Groups then
+                local defaultHex = toHex(style.GroupColor, "#3AFF37")
+                for _, group in ipairs(content.Groups) do
+                    local titleHit = query ~= "" and matches(group.Title, query)
+                    local visible = {}
+                    for _, item in ipairs(group.Items) do
+                        if titleHit or matches(item.Text, query) then
+                            table.insert(visible, item)
+                        end
+                    end
+                    if #visible > 0 or (query == "" and group.Title ~= "") then
+                        if group.Title ~= "" then
+                            table.insert(list, {
+                                Kind = "group",
+                                Gap = style.GroupSpacing and #list > 0,
+                                Text = string.format(
+                                    '<b><font color="%s">%s</font></b> <font color="#AAAAAA">(%d)</font>',
+                                    toHex(group.Color, defaultHex),
+                                    group.Title,
+                                    #group.Items
+                                ),
+                            })
+                        end
+                        for _, item in ipairs(visible) do
+                            pushItem(item)
+                        end
+                    end
+                end
+            else
+                for _, item in ipairs(content.Items) do
+                    if matches(item.Text, query) then
+                        pushItem(item)
+                    end
+                end
+            end
+
+            if query ~= "" and shown == 0 then
+                table.insert(list, {
+                    Kind = "message",
+                    Text = string.format('<font color="#888899">No results for "%s"</font>', escapeText(query)),
+                })
+            end
+            return list
+        end
+
+        local function applySpecs(list)
+            local changed = #list ~= #specs
+            specs = list
+            for index, spec in ipairs(list) do
+                local record = rows[index]
+                if not record then
+                    record = newRow()
+                    rows[index] = record
+                    changed = true
+                end
+                if record.Spec == nil or record.Spec.Kind ~= spec.Kind or (record.Spec.Gap ~= spec.Gap) then
+                    changed = true
+                end
+                record.Spec = spec
+                if not record.Frame.Visible then
+                    record.Frame.Visible = true
+                    changed = true
+                end
+                if record.Text ~= spec.Text then
+                    record.Text = spec.Text
+                    record.Label.Text = spec.Text
+                    record.MeasuredWidth = -1
+                    changed = true
+                end
+                local imageId = spec.Kind == "item" and spec.Image or nil
+                if record.ImageId ~= imageId then
+                    record.ImageId = imageId
+                    record.Image.Image = imageId or ""
+                    record.Image.Visible = imageId ~= nil
+                    record.MeasuredWidth = -1
+                    changed = true
+                end
+                if imageId then
+                    local color = toColor3(spec.ImageColor, DEFAULT_IMAGE_COLOR)
+                    if record.ImageStroke.Color ~= color then
+                        record.ImageStroke.Color = color
+                    end
+                end
+                record.Button.Visible = spec.Kind == "item" and spec.Id ~= nil
+                paintRow(record)
+            end
+            for index = #list + 1, #rows do
+                local record = rows[index]
+                if record.Frame.Visible then
+                    record.Frame.Visible = false
+                    changed = true
+                end
+                record.Spec = nil
+            end
+            return changed
+        end
+
+        local spotTemplate = nil
+        local spotModel = nil
+        local spotCenter = Vector3.zero
+        local spotDistance = 10
+        local spinAngle = 0
+
+        local function updateCamera()
+            if not spotModel then
+                return
+            end
+            local direction = Vector3.new(math.sin(spinAngle), 0.35, math.cos(spinAngle)).Unit
+            spotCamera.CFrame = CFrame.lookAt(spotCenter + direction * spotDistance, spotCenter)
+        end
+
+        local function applySpotlight()
+            local spot = content.Spotlight
+            local hadModel = spotModel ~= nil
+            local wasShown = spotFrame.Visible
+            if not spot then
+                if spotModel then
+                    spotModel:Destroy()
+                    spotModel = nil
+                end
+                spotTemplate = nil
+                spotFrame.Visible = false
+                return wasShown
+            end
+
+            spotFrame.Visible = true
+            local text = tostring(spot.Text or "")
+            if spotText.Text ~= text then
+                spotText.Text = text
+            end
+            spotStroke.Color = toColor3(spot.Color, DEFAULT_IMAGE_COLOR)
+
+            if spot.Model ~= spotTemplate then
+                spotTemplate = spot.Model
+                if spotModel then
+                    spotModel:Destroy()
+                    spotModel = nil
+                end
+                local copy = cloneForViewport(spot.Model)
+                if copy then
+                    local boxCFrame, boxSize
+                    if copy:IsA("Model") then
+                        boxCFrame, boxSize = copy:GetBoundingBox()
+                    elseif copy:IsA("BasePart") then
+                        boxCFrame, boxSize = copy.CFrame, copy.Size
+                    end
+                    if boxCFrame then
+                        spotCenter = boxCFrame.Position
+                        spotDistance = (boxSize.Magnitude * 0.5) / math.tan(math.rad(spotCamera.FieldOfView / 2)) * 1.05
+                        copy.Parent = spotView
+                        spotModel = copy
+                        updateCamera()
+                    else
+                        copy:Destroy()
+                    end
+                end
+            end
+            spotView.Visible = spotModel ~= nil
+            return (not wasShown) or hadModel ~= (spotModel ~= nil)
+        end
+
+        local function layout()
+            local host = row.Parent
+            local rowWidth = row.AbsoluteSize.X
+            if not host or rowWidth <= 0 then
+                return
+            end
+            lastWidth = rowWidth
+
+            local referenceWidth = host.AbsoluteSize.X * ROW_WIDTH_SCALE / math.max(ContentScale.X, 0.001)
+            if referenceWidth <= 0 then
+                referenceWidth = rowWidth
+            end
+
+            local bandHeight = referenceWidth / ROW_ASPECT * 0.85
+            local sideInset = rowWidth * 0.025
+            local padY = bandHeight * 0.2 * math.max(0, tonumber(style.Padding) or 1)
+            local showTitle = content.ShowTitle and content.Title ~= ""
+            local showSearch = content.SearchEnabled
+            local headerHeight = (showTitle or showSearch) and bandHeight or 0
+            local alignment = ALIGNMENTS[string.lower(tostring(style.Alignment))] or Enum.TextXAlignment.Left
+            local textSize = math.max(
+                8,
+                math.floor(referenceWidth * BODY_RATIO * math.max(0.3, tonumber(style.TextScale) or 1) + 0.5)
+            )
+            local lineHeight = math.max(0.8, tonumber(style.LineHeight) or 1.16)
+            local lineUnit = textSize * lineHeight
+            local barWidth = math.max(2, math.floor(referenceWidth * 0.006 + 0.5))
+            local font = resolveFont(style.Font)
+            local textColor = typeof(style.TextColor) == "Color3" and style.TextColor or DEFAULT_STYLE.TextColor
+            local strokeTransparency = math.clamp(tonumber(style.TextStrokeTransparency) or 0.7, 0, 1)
+            local imageSize = math.floor(lineUnit * math.max(1, tonumber(style.ImageLines) or 2.3) + 0.5)
+            local itemGap = math.floor(lineUnit * math.max(0, tonumber(style.ItemSpacing) or 0.35) + 0.5)
+            local cornerRadius = UDim.new(0, math.max(2, math.floor(lineUnit * 0.35)))
+            local fineStroke = math.max(1, math.floor(textSize * 0.1 + 0.5))
+
+            if plateStroke then
+                pcall(function()
+                    plateStroke.StrokeSizingMode = Enum.StrokeSizingMode.FixedSize
+                end)
+                plateStroke.Thickness = math.max(1, bandHeight * 0.05)
+            end
+            main.BackgroundTransparency = math.clamp(tonumber(style.BackgroundTransparency) or 0.5, 0, 1)
+
+            local fieldWidth = rowWidth * CONTROL_LAYOUT.WideWidth
+            local fieldCenterX = rowWidth * CONTROL_LAYOUT.WideCenterX
+            searchField.Visible = showSearch
+            if showSearch then
+                searchField.Size = UDim2.fromOffset(fieldWidth, bandHeight * 0.62)
+                searchField.Position = UDim2.fromOffset(fieldCenterX, bandHeight / 2)
+            end
+
+            local titleHeight = bandHeight * 0.64 * math.max(0.3, tonumber(style.TitleScale) or 1)
+            local titleRight = showSearch and (fieldCenterX - fieldWidth / 2 - sideInset) or (rowWidth - sideInset)
+            title.Visible = showTitle
+            title.Position = UDim2.fromOffset(sideInset, (bandHeight - titleHeight) / 2)
+            title.Size = UDim2.fromOffset(math.max(1, titleRight - sideInset), titleHeight)
+            title.TextXAlignment = showSearch and Enum.TextXAlignment.Left or alignment
+
+            local viewWidth = math.max(1, rowWidth - sideInset * 2)
+            local y = headerHeight > 0 and headerHeight or padY
+
+            if spotFrame.Visible then
+                local spotHeight = math.floor(lineUnit * math.max(3, tonumber(style.SpotlightLines) or 5) + 0.5)
+                local hasModel = spotModel ~= nil
+                local textLeft = hasModel and (spotHeight + math.floor(lineUnit * 0.8)) or 0
+                spotFrame.Position = UDim2.fromOffset(sideInset, y)
+                spotFrame.Size = UDim2.fromOffset(viewWidth, spotHeight)
+                spotView.Size = UDim2.fromOffset(spotHeight, spotHeight)
+                spotCorner.CornerRadius = cornerRadius
+                spotStroke.Thickness = fineStroke
+                spotText.Position = UDim2.fromOffset(textLeft, 0)
+                spotText.Size = UDim2.fromOffset(math.max(1, viewWidth - textLeft), spotHeight)
+                spotText.FontFace = font
+                spotText.TextSize = textSize
+                spotText.LineHeight = lineHeight
+                spotText.TextColor3 = textColor
+                spotText.TextStrokeTransparency = strokeTransparency
+                y += spotHeight + itemGap * 2
+            end
+
+            local styleKey = table.concat({
+                tostring(style.Font),
+                textSize,
+                lineHeight,
+                strokeTransparency,
+                tostring(alignment),
+                tostring(textColor),
+                imageSize,
+            }, "|")
+
+            local function placeRows(availableWidth)
+                local offset = 0
+                for index, spec in ipairs(specs) do
+                    local record = rows[index]
+                    local isItem = spec.Kind == "item"
+                    local hasImage = record.ImageId ~= nil
+                    local innerPad = isItem and math.floor(lineUnit * 0.25) or 0
+                    local vPad = isItem and math.floor(lineUnit * 0.18) or 0
+                    local textX = hasImage and (imageSize + math.floor(lineUnit * 0.6)) or 0
+                    local labelWidth = math.max(1, availableWidth - textX - innerPad * 2)
+
+                    if record.MeasuredWidth ~= labelWidth or record.MeasuredKey ~= styleKey then
+                        local label = record.Label
+                        label.FontFace = font
+                        label.TextSize = textSize
+                        label.LineHeight = lineHeight
+                        label.TextColor3 = textColor
+                        label.TextStrokeTransparency = strokeTransparency
+                        label.TextXAlignment = alignment
+                        label.Size = UDim2.fromOffset(labelWidth, 100000)
+                        record.MeasuredHeight = math.max(textSize, math.ceil(label.TextBounds.Y))
+                        record.MeasuredWidth = labelWidth
+                        record.MeasuredKey = styleKey
+                    end
+
+                    if spec.Kind == "group" and spec.Gap then
+                        offset += math.floor(lineUnit * 0.5)
+                    end
+                    local textHeight = record.MeasuredHeight
+                    local rowHeight = math.max(textHeight, hasImage and imageSize or 0) + vPad * 2
+
+                    record.Frame.Position = UDim2.fromOffset(0, offset)
+                    record.Frame.Size = UDim2.fromOffset(availableWidth, rowHeight)
+                    record.Corner.CornerRadius = cornerRadius
+                    if hasImage then
+                        record.Image.Position = UDim2.fromOffset(innerPad, math.floor((rowHeight - imageSize) / 2))
+                        record.Image.Size = UDim2.fromOffset(imageSize, imageSize)
+                        record.ImageCorner.CornerRadius = cornerRadius
+                        record.ImageStroke.Thickness = fineStroke
+                    end
+                    record.Label.Position = UDim2.fromOffset(innerPad + textX, math.floor((rowHeight - textHeight) / 2))
+                    record.Label.Size = UDim2.fromOffset(labelWidth, textHeight)
+
+                    offset += rowHeight + (isItem and itemGap or math.floor(itemGap * 0.5))
+                end
+                return math.max(textSize, offset)
+            end
+
+            local maxLines = math.max(0, math.floor(tonumber(style.MaxLines) or 0))
+            local limit = maxLines > 0 and math.ceil(lineUnit * maxLines) or math.huge
+            local contentHeight = placeRows(viewWidth)
+            local scrolls = contentHeight > limit
+            if scrolls then
+                contentHeight = placeRows(math.max(1, viewWidth - barWidth * 3))
+            end
+            local viewHeight = math.min(contentHeight, limit)
+
+            viewport.Position = UDim2.fromOffset(sideInset, y)
+            viewport.Size = UDim2.fromOffset(viewWidth, viewHeight)
+            viewport.CanvasSize = UDim2.fromOffset(0, contentHeight)
+            viewport.ScrollBarThickness = scrolls and barWidth or 0
+            viewport.ScrollingEnabled = scrolls
+
+            local plateHeight = y + viewHeight + padY
+            row.Size = UDim2.new(hostWidthScale(), 0, 0, math.max(1, math.ceil(plateHeight / 0.85)))
+        end
+
+        searchBox.Focused:Connect(function()
+            tweenSearchFocus(true)
+        end)
+        searchBox.FocusLost:Connect(function()
+            tweenSearchFocus(false)
+        end)
+        searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+            if content.Query ~= searchBox.Text then
+                content.Query = searchBox.Text
+                contentDirty = true
+            end
+        end)
+
+        row:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+            if math.abs(row.AbsoluteSize.X - lastWidth) >= 0.5 then
+                layoutDirty = true
+            end
+        end)
+
+        ContentScale.OnChanged(function()
+            if destroyed then
+                return false
+            end
+            layoutDirty = true
+        end)
+
+        local onScreen = true
+        local visibilityClock = VISIBILITY_CHECK
+        local spinClock = 0
+
+        local heartbeat = RunService.Heartbeat:Connect(function(deltaTime)
+            if destroyed or not row.Parent then
+                return
+            end
+            visibilityClock += deltaTime
+            if visibilityClock >= VISIBILITY_CHECK then
+                visibilityClock = 0
+                onScreen = isShown(row)
+            end
+
+            if titleDirty then
+                titleDirty = false
+                title.Text = content.Title
+                layoutDirty = true
+            end
+            if searchDirty then
+                searchDirty = false
+                searchBox.PlaceholderText = content.SearchPlaceholder
+                if searchBox.Text ~= content.Query then
+                    searchBox.Text = content.Query
+                end
+                contentDirty = true
+                layoutDirty = true
+            end
+            if contentDirty then
+                contentDirty = false
+                if applySpecs(composeSpecs()) then
+                    layoutDirty = true
+                end
+            end
+            if selectionDirty then
+                selectionDirty = false
+                for _, record in ipairs(rows) do
+                    if record.Spec then
+                        paintRow(record)
+                    end
+                end
+            end
+            if spotlightDirty then
+                spotlightDirty = false
+                if applySpotlight() then
+                    layoutDirty = true
+                end
+            end
+            if layoutDirty then
+                layoutDirty = false
+                if not pcall(layout) then
+                    layoutDirty = true
+                end
+            end
+
+            local spot = content.Spotlight
+            if spotModel and onScreen and spot and spot.Spin ~= false then
+                spinClock += deltaTime
+                if spinClock >= 1 / SPIN_RATE then
+                    spinAngle = (spinAngle + SPIN_SPEED * spinClock) % (math.pi * 2)
+                    spinClock = 0
+                    updateCamera()
+                end
+            end
+        end)
+
+        local controller = {}
+
+        function controller.GetValue()
+            return content.Text
+        end
+
+        function controller.SetValue(value)
+            content.Text = tostring(value or "")
+            content.Items = splitLines(content.Text)
+            content.Groups = nil
+            contentDirty = true
+        end
+
+        function controller.GetTitle()
+            return content.Title
+        end
+
+        function controller.SetTitle(value)
+            content.Title = tostring(value or "")
+            titleDirty = true
+        end
+
+        function controller.GetStyle()
+            local copy = {}
+            for key, value in pairs(style) do
+                copy[key] = value
+            end
+            return copy
+        end
+
+        function controller.SetStyle(patch)
+            mergeStyle(style, patch)
+            contentDirty = true
+            layoutDirty = true
+        end
+
+        function controller.SetHeader(value)
+            content.Header = tostring(value or "")
+            contentDirty = true
+        end
+
+        function controller.SetItems(items)
+            content.Items = normalizeItems(items)
+            content.Groups = nil
+            contentDirty = true
+        end
+
+        function controller.SetGroups(groups)
+            content.Groups = normalizeGroups(groups)
+            contentDirty = true
+        end
+
+        function controller.AppendItem(item, groupTitle)
+            local entry = normalizeItem(item)
+            if groupTitle ~= nil then
+                content.Groups = content.Groups or {}
+                local target = nil
+                for _, group in ipairs(content.Groups) do
+                    if group.Title == tostring(groupTitle) then
+                        target = group
+                        break
+                    end
+                end
+                if not target then
+                    target = { Title = tostring(groupTitle), Items = {} }
+                    table.insert(content.Groups, target)
+                end
+                table.insert(target.Items, entry)
+            else
+                table.insert(content.Items, entry)
+            end
+            contentDirty = true
+        end
+
+        function controller.SetSearchEnabled(enabled)
+            content.SearchEnabled = enabled == true
+            contentDirty = true
+            layoutDirty = true
+        end
+
+        function controller.SetSearchQuery(query)
+            content.Query = tostring(query or "")
+            searchDirty = true
+        end
+
+        function controller.GetSearchQuery()
+            return content.Query
+        end
+
+        function controller.SetSpotlight(spot)
+            if type(spot) == "table" then
+                content.Spotlight = {
+                    Model = spot.Model,
+                    Text = spot.Text,
+                    Color = spot.Color,
+                    Spin = spot.Spin,
+                }
+            else
+                content.Spotlight = nil
+            end
+            spotlightDirty = true
+        end
+
+        function controller.SetSelected(id)
+            content.Selected = id
+            selectionDirty = true
+        end
+
+        function controller.GetSelected()
+            return content.Selected
+        end
+
+        function controller.Destroy()
+            destroyed = true
+            heartbeat:Disconnect()
+            if spotModel then
+                spotModel:Destroy()
+                spotModel = nil
+            end
+        end
+
+        return row, controller
+    end
+
+    return createLibraryParagraphRow
+end)()
+
 local optionFactories = {
+    [10] = function(config) return createLibraryParagraphRow(config) end,
     [1] = function(config) return createLibraryButtonRow(config) end,
     [2] = function(config) return createLibraryDropdownRow(config, false) end,
     [3] = function(config) return createLibraryDropdownRow(config, true) end,
@@ -9130,11 +10205,81 @@ ApiImpl[104] = function(self)
     return ApiImpl[102](self)
 end
 
+do
+    local function paragraphMethod(index, methodName, returnsValue)
+        ApiImpl[index] = function(self, ...)
+            assertObject(self, "Option")
+            local method = self._controller[methodName]
+            assert(
+                method,
+                ("%s does not support %s()"):format(self.Type, methodName)
+            )
+            if returnsValue then
+                return method(...)
+            end
+            method(...)
+            return self
+        end
+    end
+
+    paragraphMethod(107, "SetTitle", false)
+    paragraphMethod(108, "GetTitle", true)
+    paragraphMethod(109, "SetStyle", false)
+    paragraphMethod(110, "GetStyle", true)
+    paragraphMethod(111, "SetHeader", false)
+    paragraphMethod(112, "SetItems", false)
+    paragraphMethod(113, "SetGroups", false)
+    paragraphMethod(114, "AppendItem", false)
+    paragraphMethod(115, "SetSearchEnabled", false)
+    paragraphMethod(116, "SetSearchQuery", false)
+    paragraphMethod(117, "GetSearchQuery", true)
+    paragraphMethod(118, "SetSpotlight", false)
+    paragraphMethod(119, "SetSelected", false)
+    paragraphMethod(120, "GetSelected", true)
+end
+
 local ChilliLibrary = {
     NoStateChange = STATE_NO_CHANGE,
     Version = "3.20.0",
     SplitDefaultsApi = "manual-defaults-v1",
 }
+
+ChilliLibrary.Rich = {
+    Bullet = utf8.char(0x2022),
+}
+
+function ChilliLibrary.Rich.Escape(text)
+    return (string.gsub(tostring(text), "[<>&]", {
+        ["<"] = "&lt;",
+        [">"] = "&gt;",
+        ["&"] = "&amp;",
+    }))
+end
+
+function ChilliLibrary.Rich.Color(color, text)
+    local hex = typeof(color) == "Color3" and ("#" .. color:ToHex()) or tostring(color)
+    return string.format('<font color="%s">%s</font>', hex, tostring(text))
+end
+
+function ChilliLibrary.Rich.Bold(text)
+    return "<b>" .. tostring(text) .. "</b>"
+end
+
+function ChilliLibrary.Rich.Italic(text)
+    return "<i>" .. tostring(text) .. "</i>"
+end
+
+function ChilliLibrary.Rich.Muted(text)
+    return ChilliLibrary.Rich.Color("#AAAAAA", text)
+end
+
+function ChilliLibrary.Rich.Rule(count)
+    return ChilliLibrary.Rich.Color("#444455", string.rep(utf8.char(0x2500), tonumber(count) or 38))
+end
+
+function ChilliLibrary.Rich.Join(lines)
+    return table.concat(lines, "\n")
+end
 
 
 ApiImpl[105] = function(self)
