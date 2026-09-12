@@ -8242,6 +8242,7 @@ local createLibraryParagraphRow = (function()
                 Title = item.Title ~= nil and tostring(item.Title) or nil,
                 Gradient = item.Gradient,
                 TitleParts = item.TitleParts,
+                TopRightText = item.TopRightText ~= nil and tostring(item.TopRightText) or nil,
                 Image = item.Image ~= nil and tostring(item.Image) or nil,
                 ImageColor = item.ImageColor,
                 Id = item.Id,
@@ -8251,8 +8252,8 @@ local createLibraryParagraphRow = (function()
     end
 
     -- Generic title-part data used by callers that need independently styled
-    -- pieces (for example a white display name beside a rarity gradient).
-    -- This is rendering capability only; the library does not know about pets.
+    -- pieces (for example two labels with different fonts and gradients).
+    -- This is rendering capability only; callers own all feature semantics.
     local function normalizeTitleParts(parts)
         local list = {}
         if type(parts) ~= "table" then
@@ -8843,6 +8844,22 @@ local createLibraryParagraphRow = (function()
             titleLabel.Parent = frame
             local titleStroke = makeTextStroke(titleLabel)
 
+            local topRightLabel = Instance.new("TextLabel")
+            topRightLabel.Name = "TopRightText"
+            topRightLabel.Active = false
+            topRightLabel.BackgroundTransparency = 1
+            topRightLabel.BorderSizePixel = 0
+            topRightLabel.RichText = true
+            topRightLabel.Text = ""
+            topRightLabel.TextScaled = false
+            topRightLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+            topRightLabel.TextWrapped = false
+            topRightLabel.TextXAlignment = Enum.TextXAlignment.Right
+            topRightLabel.TextYAlignment = Enum.TextYAlignment.Center
+            topRightLabel.Visible = false
+            topRightLabel.ZIndex = 7
+            topRightLabel.Parent = frame
+
             local button = Instance.new("TextButton")
             button.Name = "Hit"
             button.AutoButtonColor = false
@@ -8866,6 +8883,8 @@ local createLibraryParagraphRow = (function()
                 TitleParts = {
                     { Label = titleLabel, Stroke = titleStroke, GradientSource = nil, Spec = nil },
                 },
+                TopRightLabel = topRightLabel,
+                TopRightText = nil,
                 TitleText = nil,
                 GradientSource = nil,
                 Button = button,
@@ -8915,6 +8934,7 @@ local createLibraryParagraphRow = (function()
                     Title = item.Title,
                     Gradient = item.Gradient,
                     TitleParts = item.TitleParts,
+                    TopRightText = item.TopRightText,
                     Image = item.Image,
                     ImageColor = item.ImageColor,
                     Id = item.Id,
@@ -8924,7 +8944,10 @@ local createLibraryParagraphRow = (function()
             end
 
             local function itemMatches(item)
-                if matches(item.Text, query) or (item.Title and matches(item.Title, query)) then
+                if matches(item.Text, query)
+                    or (item.Title and matches(item.Title, query))
+                    or (item.TopRightText and matches(item.TopRightText, query))
+                then
                     return true
                 end
                 for _, part in ipairs(normalizeTitleParts(item.TitleParts)) do
@@ -9001,6 +9024,14 @@ local createLibraryParagraphRow = (function()
                 if record.Text ~= spec.Text then
                     record.Text = spec.Text
                     record.Label.Text = spec.Text
+                    record.MeasuredWidth = -1
+                    changed = true
+                end
+                local topRightText = spec.Kind == "item" and spec.TopRightText or nil
+                if record.TopRightText ~= topRightText then
+                    record.TopRightText = topRightText
+                    record.TopRightLabel.Text = topRightText or ""
+                    record.TopRightLabel.Visible = topRightText ~= nil and topRightText ~= ""
                     record.MeasuredWidth = -1
                     changed = true
                 end
@@ -9277,7 +9308,7 @@ local createLibraryParagraphRow = (function()
                     end
 
                     local rowTitleHeight = 0
-                    if record.TitleText then
+                    if record.TitleText or record.TopRightText then
                         rowTitleHeight = titleLineHeight
                     end
 
@@ -9297,12 +9328,40 @@ local createLibraryParagraphRow = (function()
                         record.ImageStroke.Thickness = fineStroke
                     end
                     local textTop = math.floor((rowHeight - textHeight - rowTitleHeight) / 2)
+                    local topRightWidth = 0
+                    if record.TopRightText then
+                        local topRightLabel = record.TopRightLabel
+                        topRightLabel.FontFace = font
+                        topRightLabel.TextSize = textSize
+                        topRightLabel.TextColor3 = textColor
+                        topRightLabel.TextStrokeTransparency = strokeTransparency
+                        topRightLabel.Size = UDim2.fromOffset(labelWidth, rowTitleHeight)
+                        local measuredWidth = topRightLabel.TextBounds.X
+                        if measuredWidth <= 0 then
+                            local plain = plainText(record.TopRightText)
+                            measuredWidth = (utf8.len(plain) or #plain) * textSize * 0.55
+                            layoutDirty = true
+                        end
+                        topRightWidth = math.min(
+                            labelWidth * 0.42,
+                            math.max(textSize * 3, math.ceil(measuredWidth + textSize * 0.25))
+                        )
+                        topRightLabel.Position = UDim2.fromOffset(
+                            innerPad + textX + labelWidth - topRightWidth,
+                            textTop
+                        )
+                        topRightLabel.Size = UDim2.fromOffset(topRightWidth, rowTitleHeight)
+                    end
                     if record.TitleText then
+                        local titleWidth = math.max(
+                            1,
+                            labelWidth - topRightWidth - (topRightWidth > 0 and titlePartSpacing or 0)
+                        )
                         layoutTitleParts(
                             record.TitleParts,
                             innerPad + textX,
                             textTop,
-                            labelWidth,
+                            titleWidth,
                             rowTitleHeight,
                             titleSize,
                             font,
@@ -10626,7 +10685,7 @@ end
 
 local ChilliLibrary = {
     NoStateChange = STATE_NO_CHANGE,
-    Version = "3.21.1",
+    Version = "3.22.0",
     SplitDefaultsApi = "manual-defaults-v1",
 }
 
