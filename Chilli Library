@@ -10318,6 +10318,7 @@ optionFactories[11] = (function()
             Template = nil,
             Model = nil,
             Center = Vector3.zero,
+            Radius = nil,
             Distance = 10,
             Angle = 0,
             Spin = spec.Spin ~= false,
@@ -10354,7 +10355,8 @@ optionFactories[11] = (function()
                 return
             end
             state.Center = boxCFrame.Position
-            state.Distance = (boxSize.Magnitude * 0.5) / math.tan(math.rad(camera.FieldOfView / 2)) * state.Zoom
+            state.Radius = boxSize.Magnitude * 0.5
+            state.Distance = state.Radius / math.tan(math.rad(camera.FieldOfView / 2)) * state.Zoom
             copy.Parent = view
             state.Model = copy
             place()
@@ -10379,7 +10381,11 @@ optionFactories[11] = (function()
                     Enum.ApplyStrokeMode.Border
                 )
             end
-            state.Zoom = canvasNumber(spec.Zoom, 1.05)
+            local zoom = canvasNumber(spec.Zoom, 1.05)
+            if zoom ~= state.Zoom and state.Radius then
+                state.Distance = state.Radius / math.tan(math.rad(camera.FieldOfView / 2)) * zoom
+            end
+            state.Zoom = zoom
             state.Height = canvasNumber(spec.CameraHeight, 0.35)
             if spec.Model ~= state.Template then
                 mount(spec.Model)
