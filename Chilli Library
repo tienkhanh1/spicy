@@ -8116,13 +8116,6 @@ local createLibraryParagraphRow = (function()
         ImageLines = 2.3,
         ItemSpacing = 0.35,
         SpotlightLines = 5,
-        ItemBackgroundColor = Color3.fromRGB(255, 255, 255),
-        ItemBackgroundTransparency = 1,
-        SelectedBackgroundColor = Color3.fromRGB(58, 255, 55),
-        SelectedBackgroundTransparency = 0.86,
-        HoverBackgroundColor = Color3.fromRGB(255, 255, 255),
-        HoverBackgroundTransparency = 0.93,
-        TitlePartSpacing = 0.34,
     }
 
     local BODY_RATIO = 0.026
@@ -8236,39 +8229,12 @@ local createLibraryParagraphRow = (function()
                 Text = tostring(item.Text or ""),
                 Title = item.Title ~= nil and tostring(item.Title) or nil,
                 Gradient = item.Gradient,
-                TitleParts = item.TitleParts,
                 Image = item.Image ~= nil and tostring(item.Image) or nil,
                 ImageColor = item.ImageColor,
                 Id = item.Id,
             }
         end
         return { Text = tostring(item) }
-    end
-
-    -- Generic title-part data used by callers that need independently styled
-    -- pieces (for example a white display name beside a rarity gradient).
-    -- This is rendering capability only; the library does not know about pets.
-    local function normalizeTitleParts(parts)
-        local list = {}
-        if type(parts) ~= "table" then
-            return list
-        end
-        for _, part in ipairs(parts) do
-            if type(part) == "table" and part.Text ~= nil then
-                table.insert(list, {
-                    Text = tostring(part.Text),
-                    Color = part.Color,
-                    Gradient = part.Gradient,
-                    StrokeGradient = part.StrokeGradient,
-                    Font = part.Font,
-                    Scale = part.Scale,
-                    StrokeColor = part.StrokeColor,
-                    StrokeTransparency = part.StrokeTransparency,
-                    StrokeThickness = part.StrokeThickness,
-                })
-            end
-        end
-        return list
     end
 
     local function normalizeItems(items)
@@ -8573,9 +8539,6 @@ local createLibraryParagraphRow = (function()
         spotTitle.ZIndex = 6
         spotTitle.Parent = spotFrame
         local spotTitleStroke = makeTextStroke(spotTitle)
-        local spotTitleParts = {
-            { Label = spotTitle, Stroke = spotTitleStroke, GradientSource = nil, Spec = nil },
-        }
 
         local spotDivider = Instance.new("Frame")
         spotDivider.Name = "SpotlightDivider"
@@ -8612,122 +8575,6 @@ local createLibraryParagraphRow = (function()
         local rows = {}
         local specs = {}
 
-        local function createTitlePart(parent, zIndex)
-            local label = Instance.new("TextLabel")
-            label.Name = "TitlePart"
-            label.Active = false
-            label.BackgroundTransparency = 1
-            label.BorderSizePixel = 0
-            label.FontFace = normalTextFont
-            label.Text = ""
-            label.TextColor3 = Color3.fromRGB(255, 255, 255)
-            label.TextScaled = false
-            label.TextStrokeTransparency = 1
-            label.TextTruncate = Enum.TextTruncate.AtEnd
-            label.TextWrapped = false
-            label.TextXAlignment = Enum.TextXAlignment.Left
-            label.TextYAlignment = Enum.TextYAlignment.Center
-            label.Visible = false
-            label.ZIndex = zIndex
-            label.Parent = parent
-            return {
-                Label = label,
-                Stroke = makeTextStroke(label),
-                GradientSource = nil,
-                StrokeGradientSource = nil,
-                Spec = nil,
-            }
-        end
-
-        local function syncTitleParts(records, parent, parts, legacyTitle, legacyGradient, zIndex)
-            local normalized = normalizeTitleParts(parts)
-            if #normalized == 0 and legacyTitle ~= nil then
-                normalized[1] = { Text = tostring(legacyTitle), Gradient = legacyGradient }
-            end
-            local changed = false
-            for index, part in ipairs(normalized) do
-                local titlePart = records[index]
-                if not titlePart then
-                    titlePart = createTitlePart(parent, zIndex)
-                    records[index] = titlePart
-                    changed = true
-                end
-                if titlePart.Label.Text ~= part.Text then
-                    titlePart.Label.Text = part.Text
-                    changed = true
-                end
-                if titlePart.GradientSource ~= part.Gradient then
-                    titlePart.GradientSource = part.Gradient
-                    applyGradient(titlePart.Label, part.Gradient)
-                    changed = true
-                end
-                if titlePart.StrokeGradientSource ~= part.StrokeGradient then
-                    titlePart.StrokeGradientSource = part.StrokeGradient
-                    applyGradient(titlePart.Stroke, part.StrokeGradient)
-                    changed = true
-                end
-                if titlePart.Spec ~= part then
-                    changed = true
-                end
-                titlePart.Spec = part
-                titlePart.Label.Visible = true
-            end
-            for index = #normalized + 1, #records do
-                local titlePart = records[index]
-                if titlePart.Label.Visible then
-                    titlePart.Label.Visible = false
-                    changed = true
-                end
-                titlePart.Spec = nil
-            end
-            return #normalized > 0, changed
-        end
-
-        local function layoutTitleParts(records, x, y, width, height, baseSize, defaultFont, alignment, spacing)
-            local visible = {}
-            local totalWidth = 0
-            for _, titlePart in ipairs(records) do
-                local part = titlePart.Spec
-                if part then
-                    local label = titlePart.Label
-                    local partSize = math.max(8, math.floor(baseSize * math.max(0.3, tonumber(part.Scale) or 1) + 0.5))
-                    label.FontFace = resolveFont(part.Font or defaultFont)
-                    label.TextSize = partSize
-                    label.TextColor3 = toColor3(part.Color, Color3.fromRGB(255, 255, 255))
-                    local stroke = titlePart.Stroke
-                    stroke.Color = toColor3(part.StrokeColor, Color3.fromRGB(0, 0, 0))
-                    stroke.Transparency = math.clamp(tonumber(part.StrokeTransparency) or 0, 0, 1)
-                    stroke.Thickness = math.max(0.5, tonumber(part.StrokeThickness) or math.max(1, partSize * 0.1))
-                    local measured = math.max(1, math.ceil(label.TextBounds.X + partSize * 0.08))
-                    table.insert(visible, { Part = titlePart, Width = measured })
-                    totalWidth += measured
-                end
-            end
-            if #visible == 0 then
-                return
-            end
-            local gap = math.max(0, spacing) * (#visible - 1)
-            local naturalWidth = totalWidth + gap
-            local scale = naturalWidth > width and math.max(0.2, (width - gap) / math.max(1, totalWidth)) or 1
-            local usedWidth = gap
-            for _, entry in ipairs(visible) do
-                entry.Width = math.max(1, math.floor(entry.Width * scale))
-                usedWidth += entry.Width
-            end
-            local cursor = x
-            if alignment == Enum.TextXAlignment.Center then
-                cursor = x + math.max(0, (width - usedWidth) / 2)
-            elseif alignment == Enum.TextXAlignment.Right then
-                cursor = x + math.max(0, width - usedWidth)
-            end
-            for _, entry in ipairs(visible) do
-                local label = entry.Part.Label
-                label.Position = UDim2.fromOffset(cursor, y)
-                label.Size = UDim2.fromOffset(entry.Width, height)
-                cursor += entry.Width + spacing
-            end
-        end
-
         local function trimmedQuery()
             if not content.SearchEnabled then
                 return ""
@@ -8743,26 +8590,11 @@ local createLibraryParagraphRow = (function()
             local spec = record.Spec
             local isItem = spec ~= nil and spec.Kind == "item"
             if isItem and spec.Id ~= nil and spec.Id == content.Selected then
-                record.Frame.BackgroundColor3 = toColor3(style.SelectedBackgroundColor, SELECTED_COLOR)
-                record.Frame.BackgroundTransparency = math.clamp(
-                    tonumber(style.SelectedBackgroundTransparency) or 0.86,
-                    0,
-                    1
-                )
+                record.Frame.BackgroundColor3 = SELECTED_COLOR
+                record.Frame.BackgroundTransparency = 0.55
             elseif isItem and record.Hovered and onItemClick then
-                record.Frame.BackgroundColor3 = toColor3(style.HoverBackgroundColor, HOVER_COLOR)
-                record.Frame.BackgroundTransparency = math.clamp(
-                    tonumber(style.HoverBackgroundTransparency) or 0.93,
-                    0,
-                    1
-                )
-            elseif isItem then
-                record.Frame.BackgroundColor3 = toColor3(style.ItemBackgroundColor, HOVER_COLOR)
-                record.Frame.BackgroundTransparency = math.clamp(
-                    tonumber(style.ItemBackgroundTransparency) or 1,
-                    0,
-                    1
-                )
+                record.Frame.BackgroundColor3 = HOVER_COLOR
+                record.Frame.BackgroundTransparency = 0.93
             else
                 record.Frame.BackgroundTransparency = 1
             end
@@ -8842,9 +8674,6 @@ local createLibraryParagraphRow = (function()
                 Label = label,
                 TitleLabel = titleLabel,
                 TitleStroke = titleStroke,
-                TitleParts = {
-                    { Label = titleLabel, Stroke = titleStroke, GradientSource = nil, Spec = nil },
-                },
                 TitleText = nil,
                 GradientSource = nil,
                 Button = button,
@@ -8893,7 +8722,6 @@ local createLibraryParagraphRow = (function()
                     Text = item.Text,
                     Title = item.Title,
                     Gradient = item.Gradient,
-                    TitleParts = item.TitleParts,
                     Image = item.Image,
                     ImageColor = item.ImageColor,
                     Id = item.Id,
@@ -8902,25 +8730,13 @@ local createLibraryParagraphRow = (function()
                 shown += 1
             end
 
-            local function itemMatches(item)
-                if matches(item.Text, query) or (item.Title and matches(item.Title, query)) then
-                    return true
-                end
-                for _, part in ipairs(normalizeTitleParts(item.TitleParts)) do
-                    if matches(part.Text, query) then
-                        return true
-                    end
-                end
-                return false
-            end
-
             if content.Groups then
                 local defaultHex = toHex(style.GroupColor, "#3AFF37")
                 for _, group in ipairs(content.Groups) do
                     local titleHit = query ~= "" and matches(group.Title, query)
                     local visible = {}
                     for _, item in ipairs(group.Items) do
-                        if titleHit or itemMatches(item) then
+                        if titleHit or matches(item.Text, query) or (item.Title and matches(item.Title, query)) then
                             table.insert(visible, item)
                         end
                     end
@@ -8944,7 +8760,7 @@ local createLibraryParagraphRow = (function()
                 end
             else
                 for _, item in ipairs(content.Items) do
-                    if itemMatches(item) then
+                    if matches(item.Text, query) or (item.Title and matches(item.Title, query)) then
                         pushItem(item)
                     end
                 end
@@ -8997,18 +8813,18 @@ local createLibraryParagraphRow = (function()
                         record.ImageStroke.Color = color
                     end
                 end
-                local hasTitleParts, titleChanged = syncTitleParts(
-                    record.TitleParts,
-                    record.Frame,
-                    spec.Kind == "item" and spec.TitleParts or nil,
-                    spec.Kind == "item" and spec.Title or nil,
-                    spec.Kind == "item" and spec.Gradient or nil,
-                    7
-                )
-                record.TitleText = hasTitleParts and true or nil
-                if titleChanged then
+                local titleText = spec.Kind == "item" and spec.Title or nil
+                if record.TitleText ~= titleText then
+                    record.TitleText = titleText
+                    record.TitleLabel.Text = titleText or ""
+                    record.TitleLabel.Visible = titleText ~= nil
                     record.MeasuredWidth = -1
                     changed = true
+                end
+                local gradientSource = spec.Kind == "item" and spec.Gradient or nil
+                if record.GradientSource ~= gradientSource then
+                    record.GradientSource = gradientSource
+                    applyGradient(record.TitleLabel, gradientSource)
                 end
                 record.Button.Visible = spec.Kind == "item" and spec.Id ~= nil
                 paintRow(record)
@@ -9061,15 +8877,15 @@ local createLibraryParagraphRow = (function()
             if spotText.Text ~= text then
                 spotText.Text = text
             end
-            local hasTitleParts = syncTitleParts(
-                spotTitleParts,
-                spotFrame,
-                spot.TitleParts,
-                spot.Title ~= nil and tostring(spot.Title) or nil,
-                spot.Gradient,
-                6
-            )
-            spotTitle.Visible = hasTitleParts
+            local titleText = spot.Title ~= nil and tostring(spot.Title) or nil
+            if spotTitle.Text ~= (titleText or "") then
+                spotTitle.Text = titleText or ""
+            end
+            spotTitle.Visible = titleText ~= nil
+            if spotGradientSource ~= spot.Gradient then
+                spotGradientSource = spot.Gradient
+                applyGradient(spotTitle, spot.Gradient)
+            end
             spotDivider.BackgroundColor3 = toColor3(spot.Color, Color3.fromRGB(255, 255, 255))
 
             if spot.Model ~= spotTemplate then
@@ -9098,7 +8914,7 @@ local createLibraryParagraphRow = (function()
                 end
             end
             spotView.Visible = spotModel ~= nil
-            return (not wasShown) or hadModel ~= (spotModel ~= nil) or hadTitle ~= hasTitleParts
+            return (not wasShown) or hadModel ~= (spotModel ~= nil) or hadTitle ~= spotTitle.Visible
         end
 
         local function layout()
@@ -9138,7 +8954,6 @@ local createLibraryParagraphRow = (function()
             local titleSize = math.max(textSize, math.floor(textSize * 1.2 + 0.5))
             local titleLineHeight = math.ceil(titleSize * lineHeight)
             local titleStrokeThickness = math.max(1, math.floor(titleSize * 0.14 + 0.5))
-            local titlePartSpacing = math.floor(lineUnit * math.max(0, tonumber(style.TitlePartSpacing) or 0.34) + 0.5)
 
             if plateStroke then
                 pcall(function()
@@ -9177,17 +8992,10 @@ local createLibraryParagraphRow = (function()
                 spotView.Size = UDim2.fromOffset(spotHeight, spotHeight)
                 spotTitle.Position = UDim2.fromOffset(textLeft, 0)
                 spotTitle.Size = UDim2.fromOffset(infoWidth, spotTitleHeight)
-                layoutTitleParts(
-                    spotTitleParts,
-                    textLeft,
-                    0,
-                    infoWidth,
-                    spotTitleHeight,
-                    titleSize,
-                    font,
-                    alignment,
-                    titlePartSpacing
-                )
+                spotTitle.FontFace = font
+                spotTitle.TextSize = titleSize
+                spotTitle.TextXAlignment = alignment
+                spotTitleStroke.Thickness = titleStrokeThickness
                 spotText.Position = UDim2.fromOffset(textLeft, spotTitleHeight)
                 spotText.Size = UDim2.fromOffset(infoWidth, math.max(1, spotHeight - spotTitleHeight))
                 spotText.FontFace = font
@@ -9243,6 +9051,10 @@ local createLibraryParagraphRow = (function()
 
                     local rowTitleHeight = 0
                     if record.TitleText then
+                        record.TitleLabel.FontFace = font
+                        record.TitleLabel.TextSize = titleSize
+                        record.TitleLabel.TextXAlignment = alignment
+                        record.TitleStroke.Thickness = titleStrokeThickness
                         rowTitleHeight = titleLineHeight
                     end
 
@@ -9263,17 +9075,8 @@ local createLibraryParagraphRow = (function()
                     end
                     local textTop = math.floor((rowHeight - textHeight - rowTitleHeight) / 2)
                     if record.TitleText then
-                        layoutTitleParts(
-                            record.TitleParts,
-                            innerPad + textX,
-                            textTop,
-                            labelWidth,
-                            rowTitleHeight,
-                            titleSize,
-                            font,
-                            alignment,
-                            titlePartSpacing
-                        )
+                        record.TitleLabel.Position = UDim2.fromOffset(innerPad + textX, textTop)
+                        record.TitleLabel.Size = UDim2.fromOffset(labelWidth, rowTitleHeight)
                     end
                     record.Label.Position = UDim2.fromOffset(innerPad + textX, textTop + rowTitleHeight)
                     record.Label.Size = UDim2.fromOffset(labelWidth, textHeight)
@@ -9489,7 +9292,6 @@ local createLibraryParagraphRow = (function()
                     Model = spot.Model,
                     Title = spot.Title,
                     Gradient = spot.Gradient,
-                    TitleParts = spot.TitleParts,
                     Text = spot.Text,
                     Color = spot.Color,
                     Spin = spot.Spin,
@@ -10591,7 +10393,7 @@ end
 
 local ChilliLibrary = {
     NoStateChange = STATE_NO_CHANGE,
-    Version = "3.21.0",
+    Version = "3.20.0",
     SplitDefaultsApi = "manual-defaults-v1",
 }
 
