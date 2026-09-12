@@ -10488,6 +10488,23 @@ optionFactories[11] = (function()
         scroll.ZIndex = 5
         scroll.Parent = plate
 
+
+        local dockFrame = Instance.new("Frame")
+        dockFrame.Name = "CanvasDock"
+        dockFrame.BackgroundTransparency = 1
+        dockFrame.BorderSizePixel = 0
+        dockFrame.ClipsDescendants = false
+        dockFrame.Visible = false
+        dockFrame.ZIndex = 7
+        dockFrame.Parent = plate
+
+        local dockRule = Instance.new("Frame")
+        dockRule.Name = "CanvasDockRule"
+        dockRule.BackgroundColor3 = Color3.fromRGB(170, 174, 184)
+        dockRule.BorderSizePixel = 0
+        dockRule.Visible = false
+        dockRule.ZIndex = 7
+        dockRule.Parent = plate
         local root = Instance.new("Frame")
         root.Name = "CanvasRoot"
         root.AutomaticSize = Enum.AutomaticSize.Y
@@ -10529,6 +10546,9 @@ optionFactories[11] = (function()
                 Width = 0,
             },
             _query = "",
+            _dockUnits = 0,
+            _dockGap = 0.22,
+            _dockRule = true,
             _contentHeight = nil,
             _dirty = true,
             _alive = true,
@@ -10619,6 +10639,28 @@ optionFactories[11] = (function()
             title.TextXAlignment = searchEnabled and Enum.TextXAlignment.Left or metrics.Align
 
             local top = headerHeight > 0 and headerHeight or padY
+            if surface._dockUnits > 0 then
+                local dockHeight = math.floor(surface._dockUnits * unit + 0.5)
+                local dockGap = math.floor(canvasNumber(surface._dockGap, 0.22) * unit + 0.5)
+                local dockRuleHeight = surface._dockRule ~= false
+                    and math.max(1, math.floor(textSize * 0.12 + 0.5))
+                    or 0
+                dockFrame.Visible = true
+                dockFrame.Position = UDim2.fromOffset(sideInset, top)
+                dockFrame.Size = UDim2.fromOffset(contentWidth, dockHeight)
+                dockRule.Visible = dockRuleHeight > 0
+                if dockRuleHeight > 0 then
+                    dockRule.BackgroundColor3 = canvasColor(surface._dockRuleColor, Color3.fromRGB(170, 174, 184))
+                    dockRule.Position = UDim2.fromOffset(sideInset, top + dockHeight + dockGap)
+                    dockRule.Size = UDim2.fromOffset(contentWidth, dockRuleHeight)
+                    top += dockHeight + dockGap * 2 + dockRuleHeight
+                else
+                    top += dockHeight + dockGap
+                end
+            else
+                dockFrame.Visible = false
+                dockRule.Visible = false
+            end
             flushParents()
 
             for _, handler in ipairs(surface._resizeHandlers) do
@@ -10652,8 +10694,10 @@ optionFactories[11] = (function()
             scroll.ScrollBarImageColor3 = canvasColor(style.ScrollBarColor, Color3.fromRGB(255, 255, 255))
             scroll.ScrollBarImageTransparency = math.clamp(canvasNumber(style.ScrollBarTransparency, 0), 0, 1)
 
-            local plateHeight = top + viewHeight + padY
-            row.Size = UDim2.new(hostWidthScale(), 0, 0, math.max(1, math.ceil(plateHeight / 0.85)))
+            local plateHeight = math.max(1, math.ceil(top + viewHeight + padY))
+            local rowGap = math.ceil(bandHeight * 0.15 / 0.85)
+            plate.Size = UDim2.new(1, 0, 0, plateHeight)
+            row.Size = UDim2.new(hostWidthScale(), 0, 0, plateHeight + rowGap)
         end
 
         local lastWidth, lastRootHeight = -1, -1
@@ -10743,6 +10787,24 @@ optionFactories[11] = (function()
         surface._impl = {
             Root = function()
                 return root
+            end,
+            Dock = function()
+                return dockFrame
+            end,
+            SetDock = function(units, options)
+                surface._dockUnits = math.max(0, canvasNumber(units, 0))
+                if type(options) == "table" then
+                    if options.Gap ~= nil then
+                        surface._dockGap = canvasNumber(options.Gap, 0.22)
+                    end
+                    if options.Divider ~= nil then
+                        surface._dockRule = options.Divider ~= false
+                    end
+                    if options.DividerColor ~= nil then
+                        surface._dockRuleColor = options.DividerColor
+                    end
+                end
+                surface._dirty = true
             end,
             Scroll = function()
                 return scroll
@@ -11979,7 +12041,7 @@ do
         "Root", "Scroll", "Plate", "Unit", "Width", "TextSize", "LineHeight", "Font",
         "Query", "Metrics", "SetContentHeight", "SetContentLines", "Invalidate", "Clear",
         "OnResize", "SetStyle", "GetStyle", "SetTitle", "SetSearchEnabled", "SetSearchQuery",
-        "Attach", "Frame", "Text", "Button", "Image", "Model", "Bar",
+        "Attach", "Frame", "Text", "Button", "Image", "Model", "Bar", "Dock", "SetDock",
     }
     for offset, methodName in ipairs(surfaceNames) do
         ApiImpl[121 + offset] = function(self, ...)
