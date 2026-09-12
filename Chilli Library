@@ -8101,7 +8101,25 @@ local function addRowToSection(section, optionType, row, controller)
     return createOptionHandle(section, optionType, row, controller)
 end
 
-local createLibraryParagraphRow = (function()
+
+local optionFactories = {
+    [1] = function(config) return createLibraryButtonRow(config) end,
+    [2] = function(config) return createLibraryDropdownRow(config, false) end,
+    [3] = function(config) return createLibraryDropdownRow(config, true) end,
+    [4] = function(config) return createLibraryDropdownRow(config, false, true) end,
+    [5] = function(config) return createLibraryDropdownRow(config, true, true) end,
+    [6] = function(config) return createLibraryInputRow(config) end,
+    [7] = function(config) return createLibraryTextRow(config) end,
+    [8] = function(config) return createLibrarySliderRow(config) end,
+    [9] = function(config)
+        if config.Note ~= nil or config.Description ~= nil then
+            return createLibraryNoteToggleRow(config)
+        end
+        return createLibraryToggleRow(config)
+    end,
+}
+
+optionFactories[10] = (function()
     local DEFAULT_STYLE = {
         TextScale = 1,
         TitleScale = 1,
@@ -9620,8 +9638,7 @@ local createLibraryParagraphRow = (function()
     return createLibraryParagraphRow
 end)()
 
-
-local createLibraryCanvasRow = (function()
+optionFactories[11] = (function()
     local CANVAS_STYLE = {
         TextScale = 1,
         TitleScale = 1,
@@ -10908,25 +10925,6 @@ local createLibraryCanvasRow = (function()
 
     return createLibraryCanvasRow
 end)()
-
-local optionFactories = {
-    [10] = function(config) return createLibraryParagraphRow(config) end,
-    [11] = function(config) return createLibraryCanvasRow(config) end,
-    [1] = function(config) return createLibraryButtonRow(config) end,
-    [2] = function(config) return createLibraryDropdownRow(config, false) end,
-    [3] = function(config) return createLibraryDropdownRow(config, true) end,
-    [4] = function(config) return createLibraryDropdownRow(config, false, true) end,
-    [5] = function(config) return createLibraryDropdownRow(config, true, true) end,
-    [6] = function(config) return createLibraryInputRow(config) end,
-    [7] = function(config) return createLibraryTextRow(config) end,
-    [8] = function(config) return createLibrarySliderRow(config) end,
-    [9] = function(config)
-        if config.Note ~= nil or config.Description ~= nil then
-            return createLibraryNoteToggleRow(config)
-        end
-        return createLibraryToggleRow(config)
-    end,
-}
 local ACTION_OPTION_TYPES = { [4] = true, [5] = true }
 
 ApiImpl[86] = function(self, optionType, config)
