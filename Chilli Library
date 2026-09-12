@@ -8118,6 +8118,7 @@ local createLibraryParagraphRow = (function()
         SpotlightLines = 5,
         SpotlightBackgroundColor = Color3.fromRGB(0, 0, 0),
         SpotlightBackgroundTransparency = 1,
+        SpotlightModelScale = 1,
         SpotlightDividerColor = false,
         ScrollBarColor = Color3.fromRGB(255, 255, 255),
         ItemBackgroundColor = Color3.fromRGB(255, 255, 255),
@@ -8375,6 +8376,9 @@ local createLibraryParagraphRow = (function()
         stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
         stroke.Color = Color3.fromRGB(0, 0, 0)
         stroke.LineJoinMode = Enum.LineJoinMode.Round
+        pcall(function()
+            stroke.StrokeSizingMode = Enum.StrokeSizingMode.FixedSize
+        end)
         stroke.Thickness = 1
         stroke.Transparency = 0
         stroke.Parent = label
@@ -9107,7 +9111,11 @@ local createLibraryParagraphRow = (function()
                     end
                     if boxCFrame then
                         spotCenter = boxCFrame.Position
-                        spotDistance = (boxSize.Magnitude * 0.5) / math.tan(math.rad(spotCamera.FieldOfView / 2)) * 1.05
+                        local modelScale = math.max(0.25, tonumber(style.SpotlightModelScale) or 1)
+                        spotDistance = (boxSize.Magnitude * 0.5)
+                            / math.tan(math.rad(spotCamera.FieldOfView / 2))
+                            * 1.05
+                            / modelScale
                         copy.Parent = spotView
                         spotModel = copy
                         updateCamera()
@@ -10618,7 +10626,7 @@ end
 
 local ChilliLibrary = {
     NoStateChange = STATE_NO_CHANGE,
-    Version = "3.21.0",
+    Version = "3.21.1",
     SplitDefaultsApi = "manual-defaults-v1",
 }
 
