@@ -8227,6 +8227,8 @@ local createLibraryParagraphRow = (function()
         if type(item) == "table" then
             return {
                 Text = tostring(item.Text or ""),
+                Title = item.Title ~= nil and tostring(item.Title) or nil,
+                Gradient = item.Gradient,
                 Image = item.Image ~= nil and tostring(item.Image) or nil,
                 ImageColor = item.ImageColor,
                 Id = item.Id,
@@ -8327,6 +8329,50 @@ local createLibraryParagraphRow = (function()
         stroke.Thickness = 1
         stroke.Parent = parent
         return stroke
+    end
+
+    local function makeTextStroke(label)
+        local stroke = Instance.new("UIStroke")
+        stroke.Name = "TextOutline"
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+        stroke.Color = Color3.fromRGB(0, 0, 0)
+        stroke.LineJoinMode = Enum.LineJoinMode.Round
+        stroke.Thickness = 1
+        stroke.Transparency = 0
+        stroke.Parent = label
+        return stroke
+    end
+
+    local function applyGradient(label, source)
+        local existing = label:FindFirstChild("ChilliGradient")
+        if source == nil then
+            if existing then
+                existing:Destroy()
+            end
+            return
+        end
+        if typeof(source) == "Instance" and source:IsA("UIGradient") then
+            if existing then
+                existing:Destroy()
+            end
+            local ok, copy = pcall(function()
+                return source:Clone()
+            end)
+            if ok and copy then
+                copy.Name = "ChilliGradient"
+                copy.Parent = label
+            end
+            return
+        end
+        if typeof(source) == "ColorSequence" then
+            local gradient = existing
+            if not gradient then
+                gradient = Instance.new("UIGradient")
+                gradient.Name = "ChilliGradient"
+                gradient.Parent = label
+            end
+            gradient.Color = source
+        end
     end
 
     local function createLibraryParagraphRow(config)
@@ -8450,15 +8496,12 @@ local createLibraryParagraphRow = (function()
         spotView.Name = "Model"
         spotView.Ambient = Color3.fromRGB(170, 170, 180)
         spotView.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        spotView.BackgroundTransparency = 0.45
+        spotView.BackgroundTransparency = 1
         spotView.BorderSizePixel = 0
         spotView.LightColor = Color3.fromRGB(255, 255, 255)
         spotView.LightDirection = Vector3.new(-0.6, -1, -0.4)
         spotView.ZIndex = 6
         spotView.Parent = spotFrame
-        local spotCorner = makeCorner(spotView)
-        local spotStroke = makeFixedStroke(spotView, DEFAULT_IMAGE_COLOR)
-
         local spotCamera = Instance.new("Camera")
         spotCamera.FieldOfView = 40
         spotCamera.Parent = spotView
@@ -8478,6 +8521,34 @@ local createLibraryParagraphRow = (function()
         spotText.TextYAlignment = Enum.TextYAlignment.Center
         spotText.ZIndex = 6
         spotText.Parent = spotFrame
+
+        local spotTitle = Instance.new("TextLabel")
+        spotTitle.Name = "SpotlightTitle"
+        spotTitle.Active = false
+        spotTitle.BackgroundTransparency = 1
+        spotTitle.BorderSizePixel = 0
+        spotTitle.FontFace = normalTextFont
+        spotTitle.Text = ""
+        spotTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        spotTitle.TextScaled = false
+        spotTitle.TextStrokeTransparency = 1
+        spotTitle.TextWrapped = false
+        spotTitle.TextXAlignment = Enum.TextXAlignment.Left
+        spotTitle.TextYAlignment = Enum.TextYAlignment.Center
+        spotTitle.Visible = false
+        spotTitle.ZIndex = 6
+        spotTitle.Parent = spotFrame
+        local spotTitleStroke = makeTextStroke(spotTitle)
+
+        local spotDivider = Instance.new("Frame")
+        spotDivider.Name = "SpotlightDivider"
+        spotDivider.Active = false
+        spotDivider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        spotDivider.BackgroundTransparency = 0.45
+        spotDivider.BorderSizePixel = 0
+        spotDivider.Visible = false
+        spotDivider.ZIndex = 6
+        spotDivider.Parent = main
 
         local viewport = Instance.new("ScrollingFrame")
         viewport.Name = "BodyViewport"
@@ -8566,6 +8637,23 @@ local createLibraryParagraphRow = (function()
             label.ZIndex = 7
             label.Parent = frame
 
+            local titleLabel = Instance.new("TextLabel")
+            titleLabel.Name = "Title"
+            titleLabel.Active = false
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.BorderSizePixel = 0
+            titleLabel.FontFace = normalTextFont
+            titleLabel.Text = ""
+            titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            titleLabel.TextScaled = false
+            titleLabel.TextStrokeTransparency = 1
+            titleLabel.TextWrapped = false
+            titleLabel.TextYAlignment = Enum.TextYAlignment.Center
+            titleLabel.Visible = false
+            titleLabel.ZIndex = 7
+            titleLabel.Parent = frame
+            local titleStroke = makeTextStroke(titleLabel)
+
             local button = Instance.new("TextButton")
             button.Name = "Hit"
             button.AutoButtonColor = false
@@ -8584,6 +8672,10 @@ local createLibraryParagraphRow = (function()
                 ImageCorner = imageCorner,
                 ImageStroke = imageStroke,
                 Label = label,
+                TitleLabel = titleLabel,
+                TitleStroke = titleStroke,
+                TitleText = nil,
+                GradientSource = nil,
                 Button = button,
                 Text = nil,
                 ImageId = nil,
@@ -8719,6 +8811,19 @@ local createLibraryParagraphRow = (function()
                         record.ImageStroke.Color = color
                     end
                 end
+                local titleText = spec.Kind == "item" and spec.Title or nil
+                if record.TitleText ~= titleText then
+                    record.TitleText = titleText
+                    record.TitleLabel.Text = titleText or ""
+                    record.TitleLabel.Visible = titleText ~= nil
+                    record.MeasuredWidth = -1
+                    changed = true
+                end
+                local gradientSource = spec.Kind == "item" and spec.Gradient or nil
+                if record.GradientSource ~= gradientSource then
+                    record.GradientSource = gradientSource
+                    applyGradient(record.TitleLabel, gradientSource)
+                end
                 record.Button.Visible = spec.Kind == "item" and spec.Id ~= nil
                 paintRow(record)
             end
@@ -8734,6 +8839,7 @@ local createLibraryParagraphRow = (function()
         end
 
         local spotTemplate = nil
+        local spotGradientSource = nil
         local spotModel = nil
         local spotCenter = Vector3.zero
         local spotDistance = 10
@@ -8750,6 +8856,7 @@ local createLibraryParagraphRow = (function()
         local function applySpotlight()
             local spot = content.Spotlight
             local hadModel = spotModel ~= nil
+            local hadTitle = spotTitle.Visible
             local wasShown = spotFrame.Visible
             if not spot then
                 if spotModel then
@@ -8757,7 +8864,9 @@ local createLibraryParagraphRow = (function()
                     spotModel = nil
                 end
                 spotTemplate = nil
+                spotGradientSource = nil
                 spotFrame.Visible = false
+                spotDivider.Visible = false
                 return wasShown
             end
 
@@ -8766,7 +8875,16 @@ local createLibraryParagraphRow = (function()
             if spotText.Text ~= text then
                 spotText.Text = text
             end
-            spotStroke.Color = toColor3(spot.Color, DEFAULT_IMAGE_COLOR)
+            local titleText = spot.Title ~= nil and tostring(spot.Title) or nil
+            if spotTitle.Text ~= (titleText or "") then
+                spotTitle.Text = titleText or ""
+            end
+            spotTitle.Visible = titleText ~= nil
+            if spotGradientSource ~= spot.Gradient then
+                spotGradientSource = spot.Gradient
+                applyGradient(spotTitle, spot.Gradient)
+            end
+            spotDivider.BackgroundColor3 = toColor3(spot.Color, Color3.fromRGB(255, 255, 255))
 
             if spot.Model ~= spotTemplate then
                 spotTemplate = spot.Model
@@ -8794,7 +8912,7 @@ local createLibraryParagraphRow = (function()
                 end
             end
             spotView.Visible = spotModel ~= nil
-            return (not wasShown) or hadModel ~= (spotModel ~= nil)
+            return (not wasShown) or hadModel ~= (spotModel ~= nil) or hadTitle ~= spotTitle.Visible
         end
 
         local function layout()
@@ -8831,6 +8949,9 @@ local createLibraryParagraphRow = (function()
             local itemGap = math.floor(lineUnit * math.max(0, tonumber(style.ItemSpacing) or 0.35) + 0.5)
             local cornerRadius = UDim.new(0, math.max(2, math.floor(lineUnit * 0.35)))
             local fineStroke = math.max(1, math.floor(textSize * 0.1 + 0.5))
+            local titleSize = math.max(textSize, math.floor(textSize * 1.2 + 0.5))
+            local titleLineHeight = math.ceil(titleSize * lineHeight)
+            local titleStrokeThickness = math.max(1, math.floor(titleSize * 0.14 + 0.5))
 
             if plateStroke then
                 pcall(function()
@@ -8862,19 +8983,33 @@ local createLibraryParagraphRow = (function()
                 local spotHeight = math.floor(lineUnit * math.max(3, tonumber(style.SpotlightLines) or 5) + 0.5)
                 local hasModel = spotModel ~= nil
                 local textLeft = hasModel and (spotHeight + math.floor(lineUnit * 0.8)) or 0
+                local infoWidth = math.max(1, viewWidth - textLeft)
+                local spotTitleHeight = spotTitle.Visible and titleLineHeight or 0
                 spotFrame.Position = UDim2.fromOffset(sideInset, y)
                 spotFrame.Size = UDim2.fromOffset(viewWidth, spotHeight)
                 spotView.Size = UDim2.fromOffset(spotHeight, spotHeight)
-                spotCorner.CornerRadius = cornerRadius
-                spotStroke.Thickness = fineStroke
-                spotText.Position = UDim2.fromOffset(textLeft, 0)
-                spotText.Size = UDim2.fromOffset(math.max(1, viewWidth - textLeft), spotHeight)
+                spotTitle.Position = UDim2.fromOffset(textLeft, 0)
+                spotTitle.Size = UDim2.fromOffset(infoWidth, spotTitleHeight)
+                spotTitle.FontFace = font
+                spotTitle.TextSize = titleSize
+                spotTitle.TextXAlignment = alignment
+                spotTitleStroke.Thickness = titleStrokeThickness
+                spotText.Position = UDim2.fromOffset(textLeft, spotTitleHeight)
+                spotText.Size = UDim2.fromOffset(infoWidth, math.max(1, spotHeight - spotTitleHeight))
                 spotText.FontFace = font
                 spotText.TextSize = textSize
                 spotText.LineHeight = lineHeight
                 spotText.TextColor3 = textColor
                 spotText.TextStrokeTransparency = strokeTransparency
-                y += spotHeight + itemGap * 2
+                spotText.TextYAlignment = spotTitleHeight > 0 and Enum.TextYAlignment.Top or Enum.TextYAlignment.Center
+                y += spotHeight + itemGap
+                local dividerHeight = math.max(1, math.floor(textSize * 0.12 + 0.5))
+                spotDivider.Visible = true
+                spotDivider.Position = UDim2.fromOffset(sideInset, y)
+                spotDivider.Size = UDim2.fromOffset(viewWidth, dividerHeight)
+                y += dividerHeight + itemGap
+            else
+                spotDivider.Visible = false
             end
 
             local styleKey = table.concat({
@@ -8912,11 +9047,20 @@ local createLibraryParagraphRow = (function()
                         record.MeasuredKey = styleKey
                     end
 
+                    local rowTitleHeight = 0
+                    if record.TitleText then
+                        record.TitleLabel.FontFace = font
+                        record.TitleLabel.TextSize = titleSize
+                        record.TitleLabel.TextXAlignment = alignment
+                        record.TitleStroke.Thickness = titleStrokeThickness
+                        rowTitleHeight = titleLineHeight
+                    end
+
                     if spec.Kind == "group" and spec.Gap then
                         offset += math.floor(lineUnit * 0.5)
                     end
                     local textHeight = record.MeasuredHeight
-                    local rowHeight = math.max(textHeight, hasImage and imageSize or 0) + vPad * 2
+                    local rowHeight = math.max(textHeight + rowTitleHeight, hasImage and imageSize or 0) + vPad * 2
 
                     record.Frame.Position = UDim2.fromOffset(0, offset)
                     record.Frame.Size = UDim2.fromOffset(availableWidth, rowHeight)
@@ -8927,7 +9071,12 @@ local createLibraryParagraphRow = (function()
                         record.ImageCorner.CornerRadius = cornerRadius
                         record.ImageStroke.Thickness = fineStroke
                     end
-                    record.Label.Position = UDim2.fromOffset(innerPad + textX, math.floor((rowHeight - textHeight) / 2))
+                    local textTop = math.floor((rowHeight - textHeight - rowTitleHeight) / 2)
+                    if record.TitleText then
+                        record.TitleLabel.Position = UDim2.fromOffset(innerPad + textX, textTop)
+                        record.TitleLabel.Size = UDim2.fromOffset(labelWidth, rowTitleHeight)
+                    end
+                    record.Label.Position = UDim2.fromOffset(innerPad + textX, textTop + rowTitleHeight)
                     record.Label.Size = UDim2.fromOffset(labelWidth, textHeight)
 
                     offset += rowHeight + (isItem and itemGap or math.floor(itemGap * 0.5))
@@ -9139,6 +9288,8 @@ local createLibraryParagraphRow = (function()
             if type(spot) == "table" then
                 content.Spotlight = {
                     Model = spot.Model,
+                    Title = spot.Title,
+                    Gradient = spot.Gradient,
                     Text = spot.Text,
                     Color = spot.Color,
                     Spin = spot.Spin,
