@@ -8118,6 +8118,8 @@ local createLibraryParagraphRow = (function()
         SpotlightLines = 5,
         SpotlightBackgroundColor = Color3.fromRGB(0, 0, 0),
         SpotlightBackgroundTransparency = 1,
+        SpotlightDividerColor = false,
+        ScrollBarColor = Color3.fromRGB(255, 255, 255),
         ItemBackgroundColor = Color3.fromRGB(255, 255, 255),
         ItemBackgroundTransparency = 1,
         SelectedBackgroundColor = Color3.fromRGB(58, 255, 55),
@@ -9085,7 +9087,9 @@ local createLibraryParagraphRow = (function()
                 6
             )
             spotTitle.Visible = hasTitleParts
-            spotDivider.BackgroundColor3 = toColor3(spot.Color, Color3.fromRGB(255, 255, 255))
+            spotDivider.BackgroundColor3 = typeof(style.SpotlightDividerColor) == "Color3"
+                and style.SpotlightDividerColor
+                or toColor3(spot.Color, Color3.fromRGB(255, 255, 255))
 
             if spot.Model ~= spotTemplate then
                 spotTemplate = spot.Model
@@ -9168,6 +9172,7 @@ local createLibraryParagraphRow = (function()
                 0,
                 1
             )
+            viewport.ScrollBarImageColor3 = toColor3(style.ScrollBarColor, Color3.fromRGB(255, 255, 255))
 
             local fieldWidth = rowWidth * CONTROL_LAYOUT.WideWidth
             local fieldCenterX = rowWidth * CONTROL_LAYOUT.WideCenterX
