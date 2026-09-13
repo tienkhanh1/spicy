@@ -2941,7 +2941,8 @@ local function createDropdownRow(
     options,
     defaultIndex,
     multiSelect,
-    action
+    action,
+    noteText
 )
     local row = Instance.new("Frame")
     row.Name = name
@@ -2968,7 +2969,7 @@ local function createDropdownRow(
     head.ZIndex = 3
     head.Parent = row
 
-    local main = buildRowPlate(head, labelText)
+    local main, titleLabel = buildRowPlate(head, labelText)
 
     local box = Instance.new("TextButton")
     box.Name = "Dropdown"
@@ -2985,6 +2986,50 @@ local function createDropdownRow(
     box.Parent = main
     addScaledStroke(box, Enum.ApplyStrokeMode.Border, 0.1)
     attachScaleFeedback(box, 1.025, 0.975)
+
+    local currentNote = tostring(noteText or "")
+    local noteVScale = ROW_ASPECT_WITH_NOTE / ROW_ASPECT
+    local boxLeft = CONTROL_LAYOUT.WideCenterX - CONTROL_LAYOUT.WideWidth / 2
+
+    local noteLabel = Instance.new("TextLabel")
+    noteLabel.Name = "Note"
+    noteLabel.Active = false
+    noteLabel.AnchorPoint = Vector2.new(0, 0.5)
+    noteLabel.BackgroundTransparency = 1
+    noteLabel.BorderSizePixel = 0
+    noteLabel.Position = UDim2.fromScale(0.025, 0.755)
+    noteLabel.Size = UDim2.fromScale(math.max(0.3, boxLeft - 0.045), 0.3)
+    noteLabel.Text = currentNote
+    noteLabel.TextWrapped = false
+    noteLabel.TextXAlignment = Enum.TextXAlignment.Left
+    noteLabel.TextYAlignment = Enum.TextYAlignment.Center
+    noteLabel.Visible = false
+    noteLabel.ZIndex = 5
+    noteLabel.Parent = main
+    applyPlainTextStyle(noteLabel)
+    noteLabel.TextTransparency = 0.32
+
+    local noteStroke = noteLabel:FindFirstChildOfClass("UIStroke")
+    if noteStroke then
+        noteStroke.Thickness = 0.06
+        noteStroke.Transparency = 0.2
+    end
+
+    local function applyNoteLayout()
+        local hasNote = currentNote ~= ""
+        noteLabel.Text = currentNote
+        noteLabel.Visible = hasNote
+        if hasNote then
+            titleLabel.Position = UDim2.fromScale(0.025, 0.34)
+            titleLabel.Size = UDim2.fromScale(0.65, 0.64 * noteVScale * NOTE_TITLE_SCALE)
+            box.Size = UDim2.fromScale(CONTROL_LAYOUT.WideWidth, 0.62 * noteVScale)
+        else
+            titleLabel.Position = UDim2.fromScale(0.025, 0.5)
+            titleLabel.Size = UDim2.fromScale(0.65, 0.64)
+            box.Size = UDim2.fromScale(CONTROL_LAYOUT.WideWidth, 0.62)
+        end
+    end
+    applyNoteLayout()
 
     local value = Instance.new("TextLabel")
     value.Name = "Value"
@@ -3558,8 +3603,9 @@ local function createDropdownRow(
         if not RESIZE_KEEPS_OPTION_WIDTH then
             referenceWidth = width / ContentScale.X
         end
-        headHeight = referenceWidth / ROW_ASPECT
-        local chipHeight = headHeight * 0.62
+        local band = referenceWidth / ROW_ASPECT
+        headHeight = currentNote ~= "" and referenceWidth / ROW_ASPECT_WITH_NOTE or band
+        local chipHeight = band * 0.62
         local count = #visibleItems
         
         clipMargin = chipHeight * 0.12
@@ -3569,7 +3615,7 @@ local function createDropdownRow(
         
         
         local plateInset = headHeight * 0.075
-        gapSize = plateInset * 2
+        gapSize = band * 0.15
         local gap = gapSize
 
         accentWidth = chipHeight * ACCENT_WIDTH_RATIO
@@ -3791,6 +3837,14 @@ local function createDropdownRow(
                 applyBaseText = tostring(text or applyBaseText)
                 refreshSelection(false)
             end
+        end,
+        GetNote = function()
+            return currentNote
+        end,
+        SetNote = function(value)
+            currentNote = tostring(value or "")
+            applyNoteLayout()
+            refreshGeometry(false)
         end,
     }
 end
@@ -4354,6 +4408,33 @@ local function createLibrarySliderRow(config)
     
     label.Size = UDim2.fromScale(0.43, 0.64)
 
+    local sliderNote = tostring(config.Note or config.Description or "")
+    local noteVScale = ROW_ASPECT_WITH_NOTE / ROW_ASPECT
+    local noteLabel = Instance.new("TextLabel")
+    noteLabel.Name = "Note"
+    noteLabel.Active = false
+    noteLabel.AnchorPoint = Vector2.new(0, 0.5)
+    noteLabel.BackgroundTransparency = 1
+    noteLabel.BorderSizePixel = 0
+    noteLabel.Position = UDim2.fromScale(0.025, 0.755)
+    noteLabel.Size = UDim2.fromScale(0.48, 0.3)
+    noteLabel.Text = ""
+    noteLabel.TextWrapped = false
+    noteLabel.TextXAlignment = Enum.TextXAlignment.Left
+    noteLabel.TextYAlignment = Enum.TextYAlignment.Center
+    noteLabel.Visible = false
+    noteLabel.ZIndex = 5
+    noteLabel.Parent = main
+    applyPlainTextStyle(noteLabel)
+    noteLabel.TextTransparency = 0.32
+    do
+        local noteStroke = noteLabel:FindFirstChildOfClass("UIStroke")
+        if noteStroke then
+            noteStroke.Thickness = 0.06
+            noteStroke.Transparency = 0.2
+        end
+    end
+
     local valueLabel = Instance.new("TextBox")
     valueLabel.Name = "Value"
     valueLabel.Active = true
@@ -4627,13 +4708,31 @@ local function createLibrarySliderRow(config)
         )
         local leftEdge = 0.62 - width
 
+        local hasNote = sliderNote ~= ""
+        local controlScale = hasNote and noteVScale or 1
         valueLabel.Position = UDim2.fromScale(leftEdge, 0.5)
-        valueLabel.Size = UDim2.fromScale(width, 0.56)
+        valueLabel.Size = UDim2.fromScale(width, 0.56 * controlScale)
+        track.Size = UDim2.fromScale(0.345, 0.45 * controlScale)
+        unitDivider.Size = UDim2.fromScale(0.0025, 0.36 * controlScale)
+        unitButton.Size = UDim2.fromScale(0.025, 0.46 * controlScale)
 
         local normalLabelWidth = showUnit and 0.43 or 0.45
+        label.Position = UDim2.fromScale(0.025, hasNote and 0.34 or 0.5)
         label.Size = UDim2.fromScale(
             math.min(normalLabelWidth, math.max(0.28, leftEdge - 0.045)),
-            0.64
+            hasNote and 0.64 * noteVScale * NOTE_TITLE_SCALE or 0.64
+        )
+
+        noteLabel.Text = sliderNote
+        noteLabel.Visible = hasNote
+        noteLabel.Size = UDim2.fromScale(math.max(0.2, leftEdge - 0.045), 0.3)
+        local rowAspect = row:FindFirstChildOfClass("UIAspectRatioConstraint")
+        if rowAspect then
+            rowAspect.AspectRatio = hasNote and ROW_ASPECT_WITH_NOTE or ROW_ASPECT
+        end
+        row:SetAttribute(
+            "ChilliResponsiveAspect",
+            hasNote and ROW_ASPECT_WITH_NOTE or ROW_ASPECT
         )
 
         
@@ -5332,6 +5431,13 @@ local function createLibrarySliderRow(config)
         GetValue = function()
             return currentValue
         end,
+        GetNote = function()
+            return sliderNote
+        end,
+        SetNote = function(value)
+            sliderNote = tostring(value or "")
+            refreshValueBoxGeometry(valueLabel.Text)
+        end,
         SetValue = setValue,
         GetRange = function()
             return minimum, maximum
@@ -5768,6 +5874,63 @@ local function createLibraryInputRow(config)
     local input = findDescendant(row, "Input")
     input.Text = normalizeText(config.Default)
 
+    local main = row:FindFirstChild("Main")
+    local title = main:FindFirstChild("Label")
+    local field = main:FindFirstChild("Field")
+    local aspect = row:FindFirstChildOfClass("UIAspectRatioConstraint")
+    local noteVScale = ROW_ASPECT_WITH_NOTE / ROW_ASPECT
+    local fieldLeft = CONTROL_LAYOUT.WideCenterX - CONTROL_LAYOUT.WideWidth / 2
+    local currentNote = ""
+
+    local noteLabel = Instance.new("TextLabel")
+    noteLabel.Name = "Note"
+    noteLabel.Active = false
+    noteLabel.AnchorPoint = Vector2.new(0, 0.5)
+    noteLabel.BackgroundTransparency = 1
+    noteLabel.BorderSizePixel = 0
+    noteLabel.Position = UDim2.fromScale(0.025, 0.755)
+    noteLabel.Size = UDim2.fromScale(math.max(0.3, fieldLeft - 0.045), 0.3)
+    noteLabel.Text = ""
+    noteLabel.TextWrapped = false
+    noteLabel.TextXAlignment = Enum.TextXAlignment.Left
+    noteLabel.TextYAlignment = Enum.TextYAlignment.Center
+    noteLabel.Visible = false
+    noteLabel.ZIndex = 5
+    noteLabel.Parent = main
+    applyPlainTextStyle(noteLabel)
+    noteLabel.TextTransparency = 0.32
+
+    local noteStroke = noteLabel:FindFirstChildOfClass("UIStroke")
+    if noteStroke then
+        noteStroke.Thickness = 0.06
+        noteStroke.Transparency = 0.2
+    end
+
+    local function setNote(value)
+        currentNote = tostring(value or "")
+        local hasNote = currentNote ~= ""
+        noteLabel.Text = currentNote
+        noteLabel.Visible = hasNote
+        if aspect and aspect.Parent then
+            aspect.AspectRatio = hasNote and ROW_ASPECT_WITH_NOTE or ROW_ASPECT
+        end
+        row:SetAttribute(
+            "ChilliResponsiveAspect",
+            hasNote and ROW_ASPECT_WITH_NOTE or ROW_ASPECT
+        )
+        if hasNote then
+            title.Position = UDim2.fromScale(0.025, 0.34)
+            title.Size = UDim2.fromScale(0.65, 0.64 * noteVScale * NOTE_TITLE_SCALE)
+            field.Size = UDim2.fromScale(CONTROL_LAYOUT.WideWidth, 0.62 * noteVScale)
+        else
+            title.Position = UDim2.fromScale(0.025, 0.5)
+            title.Size = UDim2.fromScale(0.65, 0.64)
+            field.Size = UDim2.fromScale(CONTROL_LAYOUT.WideWidth, 0.62)
+        end
+    end
+
+    setNote(config.Note or config.Description or "")
+
     input.FocusLost:Connect(function(enterPressed)
         input.Text = normalizeText(input.Text)
         safeCallback(config.Callback, input.Text, enterPressed)
@@ -5777,6 +5940,10 @@ local function createLibraryInputRow(config)
         GetValue = function()
             return input.Text
         end,
+        GetNote = function()
+            return currentNote
+        end,
+        SetNote = setNote,
         SetValue = function(value, fireCallback)
             input.Text = normalizeText(value)
             if fireCallback ~= false then
@@ -5864,6 +6031,7 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
 
     local options = copyOptions(rawOptions)
     local multiSelect = forceMulti == true or config.Multi == true
+    local currentNote = tostring(config.Note or config.Description or "")
 
     
     
@@ -5971,7 +6139,8 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
             options,
             normalizeDefault(selectedValue),
             multiSelect,
-            actionSpec
+            actionSpec,
+            currentNote
         )
         primitiveRow = mountedRow
         primitiveController = mountedController
@@ -6057,6 +6226,15 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
         end,
         Close = function()
             closeActiveDropdown()
+        end,
+        GetNote = function()
+            return currentNote
+        end,
+        SetNote = function(value)
+            currentNote = tostring(value or "")
+            if primitiveController and primitiveController.SetNote then
+                primitiveController.SetNote(currentNote)
+            end
         end,
         
         Apply = actionSpec and function()
