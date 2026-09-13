@@ -3447,6 +3447,17 @@ local function createDropdownRow(
 
         local function paint(animated)
             local chosen = isChosen()
+            if not animated then
+                if accent then
+                    accent.Size = UDim2.new(0, chosen and accentWidth or 0, 1, 0)
+                end
+                item.BackgroundTransparency = chosen and 0.2 or (hovered and 0.3 or 0.45)
+                if tickFill then
+                    tickFill.Size = UDim2.fromScale(chosen and 0.85 or 0, chosen and 0.85 or 0)
+                end
+                text.TextTransparency = chosen and 0 or 0.15
+                return
+            end
             local info = TweenInfo.new(
                 animated and 0.12 or 0,
                 Enum.EasingStyle.Quad,
@@ -3579,15 +3590,26 @@ local function createDropdownRow(
             isOpen and (menuHeight + clipMargin * 2) or 0
         )
 
+        if isOpen then
+            menuClip.Visible = true
+        end
         if animated then
             local info = TweenInfo.new(0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
             heightTween = TweenService:Create(row, info, { Size = rowSize })
             menuTween = TweenService:Create(menuClip, info, { Size = clipSize })
+            if not isOpen then
+                menuTween.Completed:Connect(function(state)
+                    if state == Enum.PlaybackState.Completed and not isOpen then
+                        menuClip.Visible = false
+                    end
+                end)
+            end
             heightTween:Play()
             menuTween:Play()
         else
             row.Size = rowSize
             menuClip.Size = clipSize
+            menuClip.Visible = isOpen
         end
     end
 
@@ -3630,7 +3652,11 @@ local function createDropdownRow(
             headHeight - plateInset + gap - clipMargin
         )
 
-        
+        if not isOpen and not animated then
+            applyOpenState(false)
+            return
+        end
+
         local hintBlock = 0
         if hintLabel then
             local hintHeight = chipHeight * 0.8
