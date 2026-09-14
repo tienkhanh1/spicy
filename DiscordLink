@@ -1,0 +1,750 @@
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+local INVITE_URL = "https://discord.gg/CJK4bs2mgT"
+local INVITE_TEXT = "discord.gg/CJK4bs2mgT"
+local LOGO_IMAGE = "rbxassetid://128961717706452"
+local TITLE_TEXT = "Chilli Hub"
+local SUBTITLE_TEXT = "Join the official Discord server"
+local BODY_TEXT = "New scripts, patch notes and giveaways land there first."
+local FOOTER_TEXT = "Official Chilli Hub Community"
+local MEMBERS_COUNT = "130K+"
+local MEMBERS_LABEL = "Members"
+local DESIGN_WIDTH, DESIGN_HEIGHT = 440, 272
+local LOCK_KEY = "\0chilli_discord_popup"
+
+local COLORS = {
+    Top = Color3.fromRGB(15, 12, 16),
+    Bottom = Color3.fromRGB(9, 8, 11),
+    Flame = Color3.fromRGB(255, 206, 64),
+    Blurple = Color3.fromRGB(88, 101, 242),
+    BlurpleLight = Color3.fromRGB(132, 142, 255),
+    Chilli = Color3.fromRGB(255, 78, 64),
+    Ember = Color3.fromRGB(255, 164, 72),
+    Text = Color3.fromRGB(244, 244, 250),
+    Muted = Color3.fromRGB(156, 156, 178),
+    Field = Color3.fromRGB(18, 17, 26),
+    FieldStroke = Color3.fromRGB(60, 58, 84),
+    Success = Color3.fromRGB(46, 176, 112),
+    SuccessLight = Color3.fromRGB(104, 228, 156),
+    White = Color3.new(1, 1, 1),
+}
+
+local SAVE_FOLDER = "Chilli Hub"
+local SAVE_FILE = SAVE_FOLDER .. "/DiscordPopup.json"
+
+local environment = (typeof(getgenv) == "function" and getgenv()) or _G
+if environment[LOCK_KEY] ~= nil then
+    return
+end
+
+local function alreadyShown()
+    if typeof(isfile) ~= "function" or typeof(readfile) ~= "function" then
+        return false
+    end
+    local okExists, exists = pcall(isfile, SAVE_FILE)
+    if not okExists or not exists then
+        return false
+    end
+    local okRead, content = pcall(readfile, SAVE_FILE)
+    return okRead and type(content) == "string" and string.find(content, INVITE_URL, 1, true) ~= nil
+end
+
+local function markShown()
+    if typeof(writefile) ~= "function" then
+        return
+    end
+    pcall(function()
+        if typeof(isfolder) == "function" and typeof(makefolder) == "function" and not isfolder(SAVE_FOLDER) then
+            makefolder(SAVE_FOLDER)
+        end
+        writefile(SAVE_FILE, game:GetService("HttpService"):JSONEncode({
+            Shown = true,
+            Invite = INVITE_URL,
+            ShownAt = os.time(),
+        }))
+    end)
+end
+
+if alreadyShown() then
+    environment[LOCK_KEY] = false
+    return
+end
+markShown()
+
+local random = Random.new()
+local CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+local function randomName()
+    local length = random:NextInteger(10, 18)
+    local parts = table.create(length)
+    for index = 1, length do
+        local pick = random:NextInteger(1, #CHARACTERS)
+        parts[index] = string.sub(CHARACTERS, pick, pick)
+    end
+    return table.concat(parts)
+end
+
+local function resolveParent()
+    if typeof(gethui) == "function" then
+        local ok, result = pcall(gethui)
+        if ok and typeof(result) == "Instance" then
+            return result
+        end
+    end
+    return CoreGui
+end
+
+local function fontOf(family, weight, fallback)
+    local ok, font = pcall(Font.new, family, weight, Enum.FontStyle.Normal)
+    if ok and font then
+        return font
+    end
+    return Font.fromEnum(fallback)
+end
+local HEAVY = fontOf("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Heavy, Enum.Font.GothamBlack)
+local BOLD = fontOf("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.Font.GothamBold)
+local MEDIUM = fontOf("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium, Enum.Font.GothamMedium)
+local MONO = fontOf("rbxasset://fonts/families/RobotoMono.json", Enum.FontWeight.Medium, Enum.Font.RobotoMono)
+
+local function create(className, properties, parent)
+    local instance = Instance.new(className)
+    instance.Name = randomName()
+    for key, value in pairs(properties) do
+        instance[key] = value
+    end
+    instance.Parent = parent
+    return instance
+end
+local function round(parent, radius)
+    return create("UICorner", { CornerRadius = radius }, parent)
+end
+local function sequence(points)
+    local keypoints = {}
+    for _, point in ipairs(points) do
+        table.insert(keypoints, ColorSequenceKeypoint.new(point[1], point[2]))
+    end
+    return ColorSequence.new(keypoints)
+end
+local function fade(points)
+    local keypoints = {}
+    for _, point in ipairs(points) do
+        table.insert(keypoints, NumberSequenceKeypoint.new(point[1], point[2]))
+    end
+    return NumberSequence.new(keypoints)
+end
+local function tween(instance, info, goal)
+    local playing = TweenService:Create(instance, info, goal)
+    playing:Play()
+    return playing
+end
+local function quick(seconds, style, direction, delay)
+    return TweenInfo.new(seconds, style or Enum.EasingStyle.Quad, direction or Enum.EasingDirection.Out, 0, false, delay or 0)
+end
+
+local connections = {}
+local closed = false
+local handle = nil
+
+local screenGui = create("ScreenGui", {
+    Archivable = false,
+    DisplayOrder = 999,
+    IgnoreGuiInset = true,
+    ResetOnSpawn = false,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+}, nil)
+
+local backdrop = create("TextButton", {
+    AutoButtonColor = false,
+    BackgroundColor3 = Color3.new(0, 0, 0),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Size = UDim2.fromScale(1, 1),
+    Text = "",
+}, screenGui)
+
+local holder = create("Frame", {
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundTransparency = 1,
+    Position = UDim2.fromScale(0.5, 0.5),
+    Size = UDim2.fromOffset(DESIGN_WIDTH, DESIGN_HEIGHT),
+}, screenGui)
+local fitScale = create("UIScale", {}, holder)
+
+local stage = create("Frame", {
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundTransparency = 1,
+    Position = UDim2.fromScale(0.5, 0.5),
+    Size = UDim2.fromScale(1, 1),
+}, holder)
+local popScale = create("UIScale", { Scale = 0.86 }, stage)
+
+local glows = {}
+for index, spread in ipairs({ 46, 38, 30, 22, 14, 6 }) do
+    local glow = create("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = COLORS.White,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.5, 0, 0.5, 8),
+        Size = UDim2.new(1, spread * 2, 1, spread * 2),
+        ZIndex = index,
+    }, stage)
+    round(glow, UDim.new(0, 18 + spread))
+    create("UIGradient", {
+        Color = sequence({ { 0, COLORS.Chilli }, { 0.5, COLORS.Ember }, { 1, COLORS.Blurple } }),
+        Rotation = 20,
+    }, glow)
+    table.insert(glows, glow)
+end
+
+local card = create("CanvasGroup", {
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    GroupTransparency = 1,
+    Size = UDim2.fromScale(1, 1),
+    ZIndex = 10,
+}, stage)
+round(card, UDim.new(0, 18))
+
+local surface = create("Frame", {
+    BackgroundColor3 = COLORS.White,
+    BorderSizePixel = 0,
+    Size = UDim2.fromScale(1, 1),
+    ZIndex = 1,
+}, card)
+create("UIGradient", {
+    Color = sequence({ { 0, COLORS.Top }, { 1, COLORS.Bottom } }),
+    Rotation = 90,
+}, surface)
+
+local function blob(color, size, transparency, rotation)
+    local frame = create("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = color,
+        BackgroundTransparency = transparency,
+        BorderSizePixel = 0,
+        Size = UDim2.fromOffset(size, size),
+        ZIndex = 2,
+    }, card)
+    round(frame, UDim.new(1, 0))
+    create("UIGradient", {
+        Rotation = rotation,
+        Transparency = fade({ { 0, 0 }, { 0.55, 0.6 }, { 1, 1 } }),
+    }, frame)
+    return frame
+end
+local blobBlue = blob(COLORS.Blurple, 250, 0.84, 225)
+local blobRed = blob(COLORS.Chilli, 230, 0.76, 45)
+
+local topLine = create("Frame", {
+    BackgroundColor3 = COLORS.White,
+    BorderSizePixel = 0,
+    Position = UDim2.fromOffset(0, 0),
+    Size = UDim2.new(1, 0, 0, 2),
+    ZIndex = 3,
+}, card)
+local topLineGradient = create("UIGradient", {
+    Color = sequence({ { 0, COLORS.Chilli }, { 0.5, COLORS.Ember }, { 1, COLORS.Blurple } }),
+    Transparency = fade({ { 0, 1 }, { 0.2, 0.1 }, { 0.8, 0.1 }, { 1, 1 } }),
+}, topLine)
+
+local logoHolder = create("Frame", {
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(12, 8),
+    Size = UDim2.fromOffset(90, 90),
+    ZIndex = 5,
+}, card)
+local logoScale = create("UIScale", { Scale = 0.55 }, logoHolder)
+local logo = create("ImageLabel", {
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundTransparency = 1,
+    Image = LOGO_IMAGE,
+    Position = UDim2.fromScale(0.5, 0.5),
+    ScaleType = Enum.ScaleType.Fit,
+    Size = UDim2.fromScale(1, 1),
+    ZIndex = 6,
+}, logoHolder)
+
+create("TextLabel", {
+    BackgroundTransparency = 1,
+    FontFace = HEAVY,
+    Position = UDim2.fromOffset(106, 26),
+    Size = UDim2.new(1, -160, 0, 30),
+    Text = TITLE_TEXT,
+    TextColor3 = COLORS.Text,
+    TextSize = 27,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 5,
+}, card)
+create("TextLabel", {
+    BackgroundTransparency = 1,
+    FontFace = MEDIUM,
+    Position = UDim2.fromOffset(106, 58),
+    Size = UDim2.new(1, -130, 0, 20),
+    Text = SUBTITLE_TEXT,
+    TextColor3 = COLORS.Muted,
+    TextSize = 15,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 5,
+}, card)
+
+local membersRow = create("Frame", {
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(106, 80),
+    Size = UDim2.new(1, -130, 0, 18),
+    ZIndex = 5,
+}, card)
+create("UIListLayout", {
+    FillDirection = Enum.FillDirection.Horizontal,
+    Padding = UDim.new(0, 6),
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    VerticalAlignment = Enum.VerticalAlignment.Center,
+}, membersRow)
+local liveHolder = create("Frame", {
+    BackgroundTransparency = 1,
+    LayoutOrder = 1,
+    Size = UDim2.fromOffset(14, 14),
+    ZIndex = 5,
+}, membersRow)
+local liveHalo = create("Frame", {
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundColor3 = COLORS.SuccessLight,
+    BackgroundTransparency = 0.6,
+    BorderSizePixel = 0,
+    Position = UDim2.fromScale(0.5, 0.5),
+    Size = UDim2.fromOffset(8, 8),
+    ZIndex = 5,
+}, liveHolder)
+round(liveHalo, UDim.new(1, 0))
+local liveDot = create("Frame", {
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundColor3 = COLORS.SuccessLight,
+    BorderSizePixel = 0,
+    Position = UDim2.fromScale(0.5, 0.5),
+    Size = UDim2.fromOffset(8, 8),
+    ZIndex = 6,
+}, liveHolder)
+round(liveDot, UDim.new(1, 0))
+create("TextLabel", {
+    AutomaticSize = Enum.AutomaticSize.X,
+    BackgroundTransparency = 1,
+    FontFace = HEAVY,
+    LayoutOrder = 2,
+    Size = UDim2.fromOffset(0, 18),
+    Text = MEMBERS_COUNT,
+    TextColor3 = COLORS.Text,
+    TextSize = 15,
+    ZIndex = 5,
+}, membersRow)
+create("TextLabel", {
+    AutomaticSize = Enum.AutomaticSize.X,
+    BackgroundTransparency = 1,
+    FontFace = MEDIUM,
+    LayoutOrder = 3,
+    Size = UDim2.fromOffset(0, 18),
+    Text = MEMBERS_LABEL,
+    TextColor3 = COLORS.Muted,
+    TextSize = 14,
+    ZIndex = 5,
+}, membersRow)
+
+local chipsRow = create("Frame", {
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(22, 108),
+    Size = UDim2.new(1, -44, 0, 26),
+    ZIndex = 5,
+}, card)
+create("UIListLayout", {
+    FillDirection = Enum.FillDirection.Horizontal,
+    Padding = UDim.new(0, 8),
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    VerticalAlignment = Enum.VerticalAlignment.Center,
+}, chipsRow)
+local function chip(order, text, color)
+    local frame = create("Frame", {
+        AutomaticSize = Enum.AutomaticSize.X,
+        BackgroundColor3 = color,
+        BackgroundTransparency = 0.86,
+        BorderSizePixel = 0,
+        LayoutOrder = order,
+        Size = UDim2.fromOffset(0, 26),
+        ZIndex = 5,
+    }, chipsRow)
+    round(frame, UDim.new(1, 0))
+    create("UIStroke", { Color = color, Thickness = 1, Transparency = 0.55 }, frame)
+    create("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 12) }, frame)
+    create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        Padding = UDim.new(0, 7),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+    }, frame)
+    local dot = create("Frame", {
+        BackgroundColor3 = color,
+        BorderSizePixel = 0,
+        LayoutOrder = 1,
+        Size = UDim2.fromOffset(6, 6),
+        ZIndex = 6,
+    }, frame)
+    round(dot, UDim.new(1, 0))
+    create("TextLabel", {
+        AutomaticSize = Enum.AutomaticSize.X,
+        BackgroundTransparency = 1,
+        FontFace = BOLD,
+        LayoutOrder = 2,
+        Size = UDim2.fromOffset(0, 26),
+        Text = text,
+        TextColor3 = COLORS.Text,
+        TextSize = 13,
+        ZIndex = 6,
+    }, frame)
+end
+chip(1, "New Scripts", COLORS.Chilli)
+chip(2, "Giveaways", COLORS.Ember)
+chip(3, "Support", COLORS.BlurpleLight)
+
+create("TextLabel", {
+    BackgroundTransparency = 1,
+    FontFace = MEDIUM,
+    Position = UDim2.fromOffset(22, 144),
+    Size = UDim2.new(1, -44, 0, 20),
+    Text = BODY_TEXT,
+    TextColor3 = COLORS.Muted,
+    TextSize = 14,
+    TextTruncate = Enum.TextTruncate.AtEnd,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 5,
+}, card)
+
+local field = create("Frame", {
+    BackgroundColor3 = COLORS.Field,
+    BorderSizePixel = 0,
+    Position = UDim2.fromOffset(22, 174),
+    Size = UDim2.new(1, -44, 0, 50),
+    ZIndex = 5,
+}, card)
+round(field, UDim.new(0, 12))
+local fieldStroke = create("UIStroke", {
+    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+    Color = COLORS.FieldStroke,
+    Thickness = 1,
+}, field)
+local linkBox = create("TextBox", {
+    BackgroundTransparency = 1,
+    ClearTextOnFocus = false,
+    FontFace = MONO,
+    Position = UDim2.fromOffset(16, 0),
+    Size = UDim2.new(1, -160, 1, 0),
+    Text = INVITE_TEXT,
+    TextColor3 = COLORS.Text,
+    TextEditable = false,
+    TextSize = 15,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 6,
+}, field)
+
+local copyButton = create("TextButton", {
+    AnchorPoint = Vector2.new(1, 0.5),
+    AutoButtonColor = false,
+    BackgroundColor3 = COLORS.White,
+    BorderSizePixel = 0,
+    ClipsDescendants = true,
+    Position = UDim2.new(1, -7, 0.5, 0),
+    Size = UDim2.fromOffset(132, 36),
+    Text = "",
+    ZIndex = 6,
+}, field)
+round(copyButton, UDim.new(0, 9))
+local copyScale = create("UIScale", {}, copyButton)
+local copyGradient = create("UIGradient", {
+    Color = sequence({ { 0, COLORS.BlurpleLight }, { 1, COLORS.Blurple } }),
+    Rotation = 90,
+}, copyButton)
+local shineClip = create("CanvasGroup", {
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Size = UDim2.fromScale(1, 1),
+    ZIndex = 7,
+}, copyButton)
+round(shineClip, UDim.new(0, 9))
+local shine = create("Frame", {
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundColor3 = COLORS.White,
+    BackgroundTransparency = 0.55,
+    BorderSizePixel = 0,
+    Position = UDim2.fromScale(-0.4, 0.5),
+    Size = UDim2.new(0, 44, 1, 0),
+    ZIndex = 7,
+}, shineClip)
+create("UIGradient", {
+    Rotation = 70,
+    Transparency = fade({ { 0, 1 }, { 0.5, 0.15 }, { 1, 1 } }),
+}, shine)
+local copyLabel = create("TextLabel", {
+    BackgroundTransparency = 1,
+    FontFace = BOLD,
+    Size = UDim2.fromScale(1, 1),
+    Text = "Copy Link",
+    TextColor3 = COLORS.White,
+    TextSize = 15,
+    ZIndex = 8,
+}, copyButton)
+
+local laterButton = create("TextButton", {
+    AutoButtonColor = false,
+    BackgroundTransparency = 1,
+    FontFace = MEDIUM,
+    Position = UDim2.fromOffset(22, 238),
+    Size = UDim2.fromOffset(110, 22),
+    Text = "Maybe later",
+    TextColor3 = COLORS.Muted,
+    TextSize = 14,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 6,
+}, card)
+create("TextLabel", {
+    AnchorPoint = Vector2.new(1, 0),
+    BackgroundTransparency = 1,
+    FontFace = MEDIUM,
+    Position = UDim2.new(1, -22, 0, 238),
+    Size = UDim2.fromOffset(240, 22),
+    Text = FOOTER_TEXT,
+    TextColor3 = COLORS.Muted,
+    TextSize = 13,
+    TextTransparency = 0.4,
+    TextXAlignment = Enum.TextXAlignment.Right,
+    ZIndex = 5,
+}, card)
+
+local closeButton = create("TextButton", {
+    AnchorPoint = Vector2.new(1, 0),
+    AutoButtonColor = false,
+    BackgroundColor3 = COLORS.Chilli,
+    BorderSizePixel = 0,
+    Position = UDim2.new(1, -14, 0, 14),
+    Size = UDim2.fromOffset(32, 32),
+    Text = "",
+    ZIndex = 6,
+}, card)
+round(closeButton, UDim.new(0, 9))
+local closeScale = create("UIScale", {}, closeButton)
+create("UIGradient", {
+    Color = sequence({ { 0, Color3.fromRGB(255, 122, 104) }, { 1, Color3.fromRGB(214, 42, 36) } }),
+    Rotation = 90,
+}, closeButton)
+create("UIStroke", {
+    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+    Color = Color3.fromRGB(120, 18, 16),
+    Thickness = 1,
+    Transparency = 0.3,
+}, closeButton)
+local crossParts = {}
+for _, angle in ipairs({ 45, -45 }) do
+    local bar = create("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = COLORS.White,
+        BorderSizePixel = 0,
+        Position = UDim2.fromScale(0.5, 0.5),
+        Rotation = angle,
+        Size = UDim2.fromOffset(14, 3),
+        ZIndex = 7,
+    }, closeButton)
+    round(bar, UDim.new(1, 0))
+    table.insert(crossParts, bar)
+end
+
+local border = create("Frame", {
+    BackgroundTransparency = 1,
+    Size = UDim2.fromScale(1, 1),
+    ZIndex = 20,
+}, stage)
+round(border, UDim.new(0, 18))
+local borderStroke = create("UIStroke", {
+    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+    Color = COLORS.White,
+    Thickness = 1.5,
+    Transparency = 1,
+}, border)
+local borderGradient = create("UIGradient", {
+    Color = sequence({
+        { 0, COLORS.Chilli },
+        { 0.3, COLORS.Ember },
+        { 0.5, COLORS.Flame },
+        { 0.75, COLORS.Blurple },
+        { 1, COLORS.Chilli },
+    }),
+}, borderStroke)
+
+local function refreshFit()
+    local camera = workspace.CurrentCamera
+    local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
+    if viewport.X < 1 or viewport.Y < 1 then
+        viewport = Vector2.new(1280, 720)
+    end
+    local mobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    local largest = mobile and 1.15 * 1.3 or 1.15
+    local scale = math.min((viewport.X - 24) / DESIGN_WIDTH, (viewport.Y - 24) / DESIGN_HEIGHT, largest)
+    fitScale.Scale = math.max(scale, 0.45)
+end
+
+local function close(immediate)
+    if closed then
+        return
+    end
+    closed = true
+    if environment[LOCK_KEY] == handle then
+        environment[LOCK_KEY] = false
+    end
+    for _, connection in ipairs(connections) do
+        pcall(function()
+            connection:Disconnect()
+        end)
+    end
+    table.clear(connections)
+    if immediate then
+        pcall(function()
+            screenGui:Destroy()
+        end)
+        return
+    end
+    local out = quick(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+    tween(backdrop, out, { BackgroundTransparency = 1 })
+    tween(popScale, out, { Scale = 0.9 })
+    tween(card, out, { GroupTransparency = 1 })
+    tween(borderStroke, out, { Transparency = 1 })
+    for _, glow in ipairs(glows) do
+        tween(glow, out, { BackgroundTransparency = 1 })
+    end
+    task.delay(0.3, function()
+        pcall(function()
+            screenGui:Destroy()
+        end)
+    end)
+end
+handle = { Close = close }
+environment[LOCK_KEY] = handle
+
+local function writeClipboard(text)
+    local writer = (typeof(setclipboard) == "function" and setclipboard)
+        or (typeof(toclipboard) == "function" and toclipboard)
+        or (type(Clipboard) == "table" and typeof(Clipboard.set) == "function" and Clipboard.set)
+        or nil
+    if not writer then
+        return false
+    end
+    return (pcall(writer, text))
+end
+
+local copyToken = 0
+local function restoreCopy(token)
+    task.delay(1.8, function()
+        if closed or token ~= copyToken then
+            return
+        end
+        copyLabel.Text = "Copy Link"
+        copyGradient.Color = sequence({ { 0, COLORS.BlurpleLight }, { 1, COLORS.Blurple } })
+        tween(fieldStroke, quick(0.25), { Color = COLORS.FieldStroke })
+        linkBox.Text = INVITE_TEXT
+    end)
+end
+
+local hovering = false
+table.insert(connections, copyButton.MouseEnter:Connect(function()
+    hovering = true
+    tween(copyScale, quick(0.15), { Scale = 1.04 })
+end))
+table.insert(connections, copyButton.MouseLeave:Connect(function()
+    hovering = false
+    tween(copyScale, quick(0.15), { Scale = 1 })
+end))
+table.insert(connections, copyButton.MouseButton1Down:Connect(function()
+    tween(copyScale, quick(0.08), { Scale = 0.95 })
+end))
+table.insert(connections, copyButton.Activated:Connect(function()
+    copyToken += 1
+    local token = copyToken
+    copyScale.Scale = 0.92
+    tween(copyScale, quick(0.35, Enum.EasingStyle.Back), { Scale = hovering and 1.04 or 1 })
+    if writeClipboard(INVITE_URL) then
+        copyLabel.Text = "✓  Copied!"
+        copyGradient.Color = sequence({ { 0, COLORS.SuccessLight }, { 1, COLORS.Success } })
+        tween(fieldStroke, quick(0.2), { Color = COLORS.Success })
+    else
+        copyLabel.Text = "Select & Copy"
+        linkBox.Text = INVITE_URL
+        pcall(function()
+            linkBox:CaptureFocus()
+            linkBox.SelectionStart = 1
+            linkBox.CursorPosition = #INVITE_URL + 1
+        end)
+        tween(fieldStroke, quick(0.2), { Color = COLORS.Ember })
+    end
+    shine.Position = UDim2.fromScale(-0.4, 0.5)
+    tween(shine, quick(0.45), { Position = UDim2.fromScale(1.4, 0.5) })
+    restoreCopy(token)
+end))
+
+table.insert(connections, closeButton.MouseEnter:Connect(function()
+    tween(closeScale, quick(0.15), { Scale = 1.1 })
+end))
+table.insert(connections, closeButton.MouseLeave:Connect(function()
+    tween(closeScale, quick(0.15), { Scale = 1 })
+end))
+table.insert(connections, closeButton.MouseButton1Down:Connect(function()
+    tween(closeScale, quick(0.08), { Scale = 0.9 })
+end))
+table.insert(connections, closeButton.Activated:Connect(function()
+    close(false)
+end))
+
+table.insert(connections, laterButton.MouseEnter:Connect(function()
+    tween(laterButton, quick(0.15), { TextColor3 = COLORS.Text })
+end))
+table.insert(connections, laterButton.MouseLeave:Connect(function()
+    tween(laterButton, quick(0.15), { TextColor3 = COLORS.Muted })
+end))
+table.insert(connections, laterButton.Activated:Connect(function()
+    close(false)
+end))
+
+local camera = workspace.CurrentCamera
+if camera then
+    table.insert(connections, camera:GetPropertyChangedSignal("ViewportSize"):Connect(refreshFit))
+end
+
+local started = os.clock()
+table.insert(connections, RunService.Heartbeat:Connect(function()
+    local elapsed = os.clock() - started
+    borderGradient.Rotation = (elapsed * 60) % 360
+    logo.Position = UDim2.new(0.5, 0, 0.5, math.sin(elapsed * 1.6) * 2.5)
+    local pulse = (elapsed * 0.9) % 1
+    liveHalo.Size = UDim2.fromOffset(8 + pulse * 10, 8 + pulse * 10)
+    liveHalo.BackgroundTransparency = 0.45 + pulse * 0.55
+    topLineGradient.Offset = Vector2.new(math.sin(elapsed * 0.8) * 0.25, 0)
+    blobBlue.Position = UDim2.new(1, -20 + math.sin(elapsed * 0.6) * 16, 0, 6 + math.cos(elapsed * 0.5) * 12)
+    blobRed.Position = UDim2.new(0, 16 + math.cos(elapsed * 0.55) * 14, 1, -4 + math.sin(elapsed * 0.7) * 10)
+end))
+
+task.spawn(function()
+    task.wait(1.2)
+    while not closed do
+        shine.Position = UDim2.fromScale(-0.4, 0.5)
+        tween(shine, quick(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Position = UDim2.fromScale(1.4, 0.5) })
+        task.wait(2.6)
+    end
+end)
+
+screenGui.Parent = resolveParent()
+refreshFit()
+blobBlue.Position = UDim2.new(1, -20, 0, 18)
+blobRed.Position = UDim2.new(0, 30, 1, -4)
+tween(backdrop, quick(0.35), { BackgroundTransparency = 0.42 })
+tween(popScale, quick(0.55, Enum.EasingStyle.Back), { Scale = 1 })
+tween(card, quick(0.3), { GroupTransparency = 0 })
+tween(borderStroke, quick(0.45), { Transparency = 0.1 })
+tween(logoScale, quick(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0.12), { Scale = 1 })
+for index, glow in ipairs(glows) do
+    tween(glow, quick(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0.05 * index), { BackgroundTransparency = 0.945 })
+end
