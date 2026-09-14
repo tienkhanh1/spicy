@@ -582,8 +582,8 @@ local function refreshFit()
     if viewport.X < 1 or viewport.Y < 1 then
         viewport = Vector2.new(1280, 720)
     end
-    local scale = math.min((viewport.X - 24) / DESIGN_WIDTH, (viewport.Y - 24) / DESIGN_HEIGHT, 1.15)
-    fitScale.Scale = math.max(scale, 0.45)
+    local scale = math.min(viewport.X * 0.6 / DESIGN_WIDTH, viewport.Y * 0.5 / DESIGN_HEIGHT, 1.15)
+    fitScale.Scale = math.max(scale, 0.5)
 end
 
 local function close(immediate)
