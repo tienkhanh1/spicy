@@ -3348,8 +3348,6 @@ local function createDropdownRow(
         return #picked .. " selected"
     end
 
-    local itemsBuilt = false
-    local function buildItems()
     for index, optionText in ipairs(options) do
         local item = Instance.new("TextButton")
         item.Name = "Option" .. index
@@ -3511,15 +3509,6 @@ local function createDropdownRow(
 
         items[index] = { button = item, paint = paint }
     end
-    end
-
-    local function ensureItems()
-        if itemsBuilt then
-            return
-        end
-        itemsBuilt = true
-        buildItems()
-    end
 
     refreshSelection = function(animated)
         for _, entry in ipairs(items) do
@@ -3559,10 +3548,6 @@ local function createDropdownRow(
     
     
     local function applyFilter()
-        if not itemsBuilt then
-            visibleItems = {}
-            return
-        end
         local query = searchQuery:lower()
         visibleItems = {}
         for index, entry in ipairs(items) do
@@ -3768,8 +3753,7 @@ local function createDropdownRow(
         if open then
             
             closeActiveDropdown()
-            ensureItems()
-
+            
             if searchBox then
                 searchBox.Text = ""
             end
