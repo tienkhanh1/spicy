@@ -1,6 +1,5 @@
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
 local INVITE_URL = "https://discord.gg/CJK4bs2mgT"
@@ -583,9 +582,7 @@ local function refreshFit()
     if viewport.X < 1 or viewport.Y < 1 then
         viewport = Vector2.new(1280, 720)
     end
-    local mobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-    local largest = mobile and 1.15 * 1.3 or 1.15
-    local scale = math.min((viewport.X - 24) / DESIGN_WIDTH, (viewport.Y - 24) / DESIGN_HEIGHT, largest)
+    local scale = math.min((viewport.X - 24) / DESIGN_WIDTH, (viewport.Y - 24) / DESIGN_HEIGHT, 1.15)
     fitScale.Scale = math.max(scale, 0.45)
 end
 
