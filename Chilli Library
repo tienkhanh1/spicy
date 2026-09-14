@@ -669,14 +669,30 @@ local topBar = objects.obj4
 local closeButton = objects.obj14
 
 local Runtime = {}
+Runtime.BreatheLast = os.clock()
+Runtime.BreatheWaited = 0
+Runtime.BreatheDone = false
+Runtime.Breathe = function()
+    if Runtime.BreatheDone or Runtime.BreatheWaited >= 0.8 or os.clock() - Runtime.BreatheLast < 0.02 then
+        return
+    end
+    local before = os.clock()
+    task.wait()
+    local now = os.clock()
+    Runtime.BreatheWaited += now - before
+    Runtime.BreatheLast = now
+end
 local Protected = {}
+Runtime.Breathe()
 
 local rootConnections = {}
+Runtime.Breathe()
 
 local function trackRootConnection(connection)
     table.insert(rootConnections, connection)
     return connection
 end
+Runtime.Breathe()
 
 local function disconnectRootConnections()
     for index = #rootConnections, 1, -1 do
@@ -687,13 +703,17 @@ local function disconnectRootConnections()
         rootConnections[index] = nil
     end
 end
+Runtime.Breathe()
 
 rootGui.ResetOnSpawn = false
+Runtime.Breathe()
 
 
 
 rootGui.IgnoreGuiInset = true
+Runtime.Breathe()
 rootGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Runtime.Breathe()
 
 
 
@@ -704,7 +724,9 @@ do
         ChilliAutoGetBarGui = true,
         ChilliFpsPingGui = true,
     }
+    Runtime.Breathe()
     local boundTargets = setmetatable({}, { __mode = "k" })
+    Runtime.Breathe()
 
     local function bindTarget(screen, target)
         if boundTargets[target] or not target:IsA("GuiObject") then
@@ -752,6 +774,7 @@ do
         ))
         task.defer(applyBounds)
     end
+    Runtime.Breathe()
 
     local function bindScreen(screen)
         if not screen:IsA("ScreenGui") or not managedNames[screen.Name] then
@@ -768,12 +791,15 @@ do
             consider(child)
         end
     end
+    Runtime.Breathe()
 
     trackRootConnection(parent.ChildAdded:Connect(bindScreen))
+    Runtime.Breathe()
     for _, child in ipairs(parent:GetChildren()) do
         bindScreen(child)
     end
 end
+Runtime.Breathe()
 
 
 local function findLeftCenterSources()
@@ -789,24 +815,36 @@ local function findLeftCenterSources()
 
     return screen, frame, buttons, shop, icon, text
 end
+Runtime.Breathe()
 
 local sourceLeftCenterScreen
+Runtime.Breathe()
 local sourceLeftCenter
+Runtime.Breathe()
 local sourceButtons
+Runtime.Breathe()
 local sourceShop
+Runtime.Breathe()
 local sourceShopIcon
+Runtime.Breathe()
 local sourceShopText
+Runtime.Breathe()
 sourceLeftCenterScreen, sourceLeftCenter, sourceButtons,
     sourceShop, sourceShopIcon, sourceShopText = findLeftCenterSources()
 
 local leftCenterFrame = sourceLeftCenter
+Runtime.Breathe()
 local hudRestorePosition = leftCenterFrame
     and sourceLeftCenter.Position
     or UDim2.fromScale(0, 0.5)
 local hudTween = nil
+Runtime.Breathe()
 local hudTweenConnection = nil
+Runtime.Breathe()
 local hudAnimationSerial = 0
+Runtime.Breathe()
 Runtime.chilliIsOpen = false
+Runtime.Breathe()
 
 local function cancelHudTween()
     if hudTweenConnection then
@@ -818,18 +856,24 @@ local function cancelHudTween()
         hudTween = nil
     end
 end
+Runtime.Breathe()
 
 local launcherGui = Instance.new("ScreenGui")
+Runtime.Breathe()
 launcherGui.Name = LAUNCHER_GUI_NAME
+Runtime.Breathe()
 launcherGui.ResetOnSpawn = false
+Runtime.Breathe()
 launcherGui.IgnoreGuiInset = sourceLeftCenterScreen
     and sourceLeftCenterScreen.IgnoreGuiInset
     or false
 launcherGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Runtime.Breathe()
 launcherGui.DisplayOrder = sourceLeftCenterScreen
     and sourceLeftCenterScreen.DisplayOrder
     or 0
 launcherGui:SetAttribute(OWNER_ATTRIBUTE, true)
+Runtime.Breathe()
 if sourceLeftCenterScreen then
     pcall(function()
         launcherGui.ScreenInsets = sourceLeftCenterScreen.ScreenInsets
@@ -837,14 +881,20 @@ if sourceLeftCenterScreen then
         launcherGui.ClipToDeviceSafeArea = sourceLeftCenterScreen.ClipToDeviceSafeArea
     end)
 end
+Runtime.Breathe()
 local gameId = game.GameId
+Runtime.Breathe()
 if gameId ~= 7709344486 then
     launcherGui.Enabled = false
 end
+Runtime.Breathe()
 launcherGui.Parent = parent
+Runtime.Breathe()
 
 local launcherRoot = Instance.new("Frame")
+Runtime.Breathe()
 launcherRoot.Name = "LeftCenter"
+Runtime.Breathe()
 launcherRoot.AnchorPoint = sourceLeftCenter
     and sourceLeftCenter.AnchorPoint
     or Vector2.new(0, 0.5)
@@ -855,19 +905,29 @@ launcherRoot.Size = sourceLeftCenter
     and sourceLeftCenter.Size
     or UDim2.fromScale(1, 1)
 launcherRoot.BackgroundTransparency = 1
+Runtime.Breathe()
 launcherRoot.BorderSizePixel = 0
+Runtime.Breathe()
 launcherRoot.Parent = launcherGui
+Runtime.Breathe()
 
 local sourceRootAspect = sourceLeftCenter
     and sourceLeftCenter:FindFirstChildOfClass("UIAspectRatioConstraint")
 local launcherRootAspect = Instance.new("UIAspectRatioConstraint")
+Runtime.Breathe()
 launcherRootAspect.AspectRatio = sourceRootAspect and sourceRootAspect.AspectRatio or 2.15
+Runtime.Breathe()
 launcherRootAspect.AspectType = sourceRootAspect and sourceRootAspect.AspectType or Enum.AspectType.FitWithinMaxSize
+Runtime.Breathe()
 launcherRootAspect.DominantAxis = sourceRootAspect and sourceRootAspect.DominantAxis or Enum.DominantAxis.Width
+Runtime.Breathe()
 launcherRootAspect.Parent = launcherRoot
+Runtime.Breathe()
 
 local launcherButtons = Instance.new("Frame")
+Runtime.Breathe()
 launcherButtons.Name = "Buttons"
+Runtime.Breathe()
 launcherButtons.AnchorPoint = sourceButtons
     and sourceButtons.AnchorPoint
     or Vector2.new(0, 0.5)
@@ -878,20 +938,31 @@ launcherButtons.Size = sourceButtons
     and sourceButtons.Size
     or UDim2.fromScale(0.062, 0.38)
 launcherButtons.BackgroundTransparency = 1
+Runtime.Breathe()
 launcherButtons.BorderSizePixel = 0
+Runtime.Breathe()
 launcherButtons.Parent = launcherRoot
+Runtime.Breathe()
 
 local sourceButtonsAspect = sourceButtons
     and sourceButtons:FindFirstChildOfClass("UIAspectRatioConstraint")
 local launcherButtonsAspect = Instance.new("UIAspectRatioConstraint")
+Runtime.Breathe()
 launcherButtonsAspect.AspectRatio = sourceButtonsAspect and sourceButtonsAspect.AspectRatio or 0.3
+Runtime.Breathe()
 launcherButtonsAspect.AspectType = sourceButtonsAspect and sourceButtonsAspect.AspectType or Enum.AspectType.FitWithinMaxSize
+Runtime.Breathe()
 launcherButtonsAspect.DominantAxis = sourceButtonsAspect and sourceButtonsAspect.DominantAxis or Enum.DominantAxis.Width
+Runtime.Breathe()
 launcherButtonsAspect.Parent = launcherButtons
+Runtime.Breathe()
 
 local chilliButton = Instance.new("ImageButton")
+Runtime.Breathe()
 chilliButton.Name = "Chilli"
+Runtime.Breathe()
 chilliButton.AnchorPoint = Vector2.new(0.5, 0.5)
+Runtime.Breathe()
 chilliButton.Position = sourceShop
     and UDim2.fromScale(0.5, 0)
     or UDim2.fromScale(0.42, -0.1885267)
@@ -905,7 +976,9 @@ chilliButton.BackgroundTransparency = sourceShop
     and sourceShop.BackgroundTransparency
     or 1
 chilliButton.BorderSizePixel = 0
+Runtime.Breathe()
 chilliButton.AutoButtonColor = sourceShop == nil or sourceShop.AutoButtonColor
+Runtime.Breathe()
 chilliButton.Image = sourceShop
     and sourceShop.Image
     or "rbxassetid://88734015663903"
@@ -913,6 +986,7 @@ chilliButton.HoverImage = sourceShop
     and sourceShop.HoverImage
     or "rbxassetid://119376130178381"
 chilliButton.PressedImage = sourceShop and sourceShop.PressedImage or ""
+Runtime.Breathe()
 chilliButton.ImageColor3 = sourceShop
     and sourceShop.ImageColor3
     or Color3.fromRGB(255, 255, 255)
@@ -935,29 +1009,45 @@ chilliButton.SliceCenter = sourceShop
     and sourceShop.SliceCenter
     or Rect.new()
 chilliButton.SliceScale = sourceShop and sourceShop.SliceScale or 1
+Runtime.Breathe()
 chilliButton.ZIndex = sourceShop and sourceShop.ZIndex or 2
+Runtime.Breathe()
 chilliButton.Parent = launcherButtons
+Runtime.Breathe()
 
 local fallbackButtonGradient = Instance.new("UIGradient")
+Runtime.Breathe()
 fallbackButtonGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(111, 145, 161)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(52, 72, 84)),
 })
+Runtime.Breathe()
 fallbackButtonGradient.Rotation = 90
+Runtime.Breathe()
 fallbackButtonGradient.Enabled = false
+Runtime.Breathe()
 fallbackButtonGradient.Parent = chilliButton
+Runtime.Breathe()
 
 local fallbackButtonStroke = Instance.new("UIStroke")
+Runtime.Breathe()
 fallbackButtonStroke.Color = Color3.fromRGB(34, 45, 52)
+Runtime.Breathe()
 fallbackButtonStroke.Thickness = 0.025
+Runtime.Breathe()
 fallbackButtonStroke.Enabled = false
+Runtime.Breathe()
 pcall(function()
     fallbackButtonStroke.StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize
 end)
+Runtime.Breathe()
 fallbackButtonStroke.Parent = chilliButton
+Runtime.Breathe()
 
 local chilliViewport = Instance.new("ViewportFrame")
+Runtime.Breathe()
 chilliViewport.Name = "ChilliViewport"
+Runtime.Breathe()
 chilliViewport.AnchorPoint = sourceShopIcon and sourceShopIcon.AnchorPoint
     or Vector2.new(0.5, 0.5)
 chilliViewport.Position = sourceShopIcon and sourceShopIcon.Position
@@ -965,41 +1055,68 @@ chilliViewport.Position = sourceShopIcon and sourceShopIcon.Position
 chilliViewport.Size = sourceShopIcon and sourceShopIcon.Size
     or UDim2.fromScale(0.76055, 0.76055)
 chilliViewport.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Runtime.Breathe()
 chilliViewport.BackgroundTransparency = 1
+Runtime.Breathe()
 chilliViewport.BorderSizePixel = 0
+Runtime.Breathe()
 chilliViewport.Ambient = Color3.fromRGB(255, 255, 255)
+Runtime.Breathe()
 chilliViewport.LightColor = Color3.fromRGB(255, 255, 255)
+Runtime.Breathe()
 chilliViewport.LightDirection = Vector3.new(-1, -1, -1)
+Runtime.Breathe()
 chilliViewport.ImageColor3 = Color3.fromRGB(255, 255, 255)
+Runtime.Breathe()
 chilliViewport.ImageTransparency = 0
+Runtime.Breathe()
 chilliViewport.LayoutOrder = 0
+Runtime.Breathe()
 chilliViewport.ZIndex = sourceShopIcon and sourceShopIcon.ZIndex or 0
+Runtime.Breathe()
 chilliViewport.Visible = true
+Runtime.Breathe()
 chilliViewport.Active = false
+Runtime.Breathe()
 pcall(function()
     chilliViewport.Interactable = false
 end)
+Runtime.Breathe()
 chilliViewport.Parent = chilliButton
+Runtime.Breathe()
 
 local chilliWorldModel = Instance.new("WorldModel")
+Runtime.Breathe()
 chilliWorldModel.Name = "WorldModel"
+Runtime.Breathe()
 chilliWorldModel.Parent = chilliViewport
+Runtime.Breathe()
 
 local chilliSpider = createEmbeddedSpider()
+Runtime.Breathe()
 chilliSpider.Parent = chilliWorldModel
+Runtime.Breathe()
 chilliSpider.CFrame = CFrame.Angles(
     math.rad(82.5),
     math.rad(-153.95),
     math.rad(0)
 )
+Runtime.Breathe()
 
 local chilliViewportCamera = Instance.new("Camera")
+Runtime.Breathe()
 chilliViewportCamera.Name = "Camera"
+Runtime.Breathe()
 chilliViewportCamera.CameraType = Enum.CameraType.Fixed
+Runtime.Breathe()
 chilliViewportCamera.FieldOfView = 50
+Runtime.Breathe()
 chilliViewportCamera.FieldOfViewMode = Enum.FieldOfViewMode.Vertical
+Runtime.Breathe()
 chilliViewportCamera.Parent = chilliViewport
+Runtime.Breathe()
 chilliViewport.CurrentCamera = chilliViewportCamera
+Runtime.Breathe()
 
 local function frameChilliSpider()
     local boxCFrame = chilliSpider.CFrame
@@ -1041,48 +1158,77 @@ local function frameChilliSpider()
     chilliViewportCamera.CFrame = CFrame.lookAt(cameraPosition, target)
     chilliViewportCamera.Focus = CFrame.new(target)
 end
+Runtime.Breathe()
 
 frameChilliSpider()
+Runtime.Breathe()
 task.defer(function()
     RunService.RenderStepped:Wait()
     frameChilliSpider()
 end)
+Runtime.Breathe()
 
 local chilliText = Instance.new("TextLabel")
+Runtime.Breathe()
 chilliText.Name = "Txt"
+Runtime.Breathe()
 chilliText.AnchorPoint = sourceShopText and sourceShopText.AnchorPoint or Vector2.new(0.5, 0.5)
+Runtime.Breathe()
 chilliText.Position = sourceShopText and sourceShopText.Position or UDim2.fromScale(0.5, 0.9367089)
+Runtime.Breathe()
 chilliText.Size = sourceShopText and sourceShopText.Size or UDim2.fromScale(1, 0.2278481)
+Runtime.Breathe()
 chilliText.BackgroundTransparency = 1
+Runtime.Breathe()
 chilliText.BorderSizePixel = 0
+Runtime.Breathe()
 chilliText.FontFace = sourceShopText and sourceShopText.FontFace or Font.new(
     "rbxasset://fonts/families/GothamSSm.json",
     Enum.FontWeight.ExtraBold
 )
+Runtime.Breathe()
 chilliText.Text = "Chilli Hub"
+Runtime.Breathe()
 chilliText.TextColor3 = sourceShopText and sourceShopText.TextColor3 or Color3.fromRGB(255, 255, 255)
+Runtime.Breathe()
 chilliText.TextTransparency = sourceShopText and sourceShopText.TextTransparency or 0
+Runtime.Breathe()
 chilliText.TextScaled = sourceShopText == nil or sourceShopText.TextScaled
+Runtime.Breathe()
 chilliText.TextWrapped = sourceShopText == nil or sourceShopText.TextWrapped
+Runtime.Breathe()
 chilliText.TextXAlignment = sourceShopText and sourceShopText.TextXAlignment or Enum.TextXAlignment.Center
+Runtime.Breathe()
 chilliText.TextYAlignment = sourceShopText and sourceShopText.TextYAlignment or Enum.TextYAlignment.Center
+Runtime.Breathe()
 chilliText.ZIndex = sourceShopText and sourceShopText.ZIndex or 1
+Runtime.Breathe()
 chilliText.Parent = chilliButton
+Runtime.Breathe()
 
 local sourceTextStroke = sourceShopText and sourceShopText:FindFirstChildOfClass("UIStroke")
+Runtime.Breathe()
 local chilliTextStroke = Instance.new("UIStroke")
+Runtime.Breathe()
 chilliTextStroke.ApplyStrokeMode = sourceTextStroke and sourceTextStroke.ApplyStrokeMode or Enum.ApplyStrokeMode.Contextual
+Runtime.Breathe()
 chilliTextStroke.Color = sourceTextStroke and sourceTextStroke.Color or Color3.fromRGB(0, 0, 0)
+Runtime.Breathe()
 chilliTextStroke.LineJoinMode = sourceTextStroke and sourceTextStroke.LineJoinMode or Enum.LineJoinMode.Round
+Runtime.Breathe()
 chilliTextStroke.Thickness = sourceTextStroke and sourceTextStroke.Thickness or 2
+Runtime.Breathe()
 chilliTextStroke.Transparency = sourceTextStroke and sourceTextStroke.Transparency or 0.35
+Runtime.Breathe()
 if sourceTextStroke then
     local originalThickness = sourceTextStroke:GetAttribute("OriginalThickness")
     if originalThickness ~= nil then
         chilliTextStroke:SetAttribute("OriginalThickness", originalThickness)
     end
 end
+Runtime.Breathe()
 chilliTextStroke.Parent = chilliText
+Runtime.Breathe()
 
 local function getLiveVerticalStep()
     if not (sourceButtons and sourceButtons.Parent and sourceShop and sourceShop.Parent) then
@@ -1118,6 +1264,7 @@ local function getLiveVerticalStep()
 
     return shopSize.Y
 end
+Runtime.Breathe()
 
 local function updateChilliLauncherLayout()
     if not (sourceButtons and sourceButtons.Parent and sourceShop and sourceShop.Parent) then
@@ -1148,8 +1295,10 @@ local function updateChilliLauncherLayout()
         shopSize.Y / buttonsSize.Y
     )
 end
+Runtime.Breathe()
 
 local launcherLayoutQueued = false
+Runtime.Breathe()
 local function queueChilliLauncherLayout()
     
     
@@ -1165,9 +1314,12 @@ local function queueChilliLauncherLayout()
         end
     end)
 end
+Runtime.Breathe()
 
 local sourceConnections = {}
+Runtime.Breathe()
 local sourceBound = false
+Runtime.Breathe()
 
 local function disconnectSourceConnections()
     for _, connection in ipairs(sourceConnections) do
@@ -1176,11 +1328,13 @@ local function disconnectSourceConnections()
     table.clear(sourceConnections)
     sourceBound = false
 end
+Runtime.Breathe()
 
 local function connectSource(signal, callback)
     local connection = signal:Connect(callback)
     table.insert(sourceConnections, connection)
 end
+Runtime.Breathe()
 
 local function shiftOneScreenLeft(position)
     return UDim2.new(
@@ -1190,6 +1344,7 @@ local function shiftOneScreenLeft(position)
         position.Y.Offset
     )
 end
+Runtime.Breathe()
 
 local function refreshEffectiveLeftCenterHidden()
     local unavailable = not sourceLeftCenterScreen
@@ -1222,6 +1377,7 @@ local function refreshEffectiveLeftCenterHidden()
         )
     end
 end
+Runtime.Breathe()
 
 local function adoptLeftCenterSources(screen, frame, buttons, shop, icon, text)
     if sourceBound
@@ -1436,6 +1592,7 @@ local function adoptLeftCenterSources(screen, frame, buttons, shop, icon, text)
     task.defer(frameChilliSpider)
     return true
 end
+Runtime.Breathe()
 
 if sourceLeftCenterScreen then
     adoptLeftCenterSources(
@@ -1469,6 +1626,7 @@ else
         end
     end)
 end
+Runtime.Breathe()
 
 
 
@@ -1481,11 +1639,13 @@ trackRootConnection(playerGui.DescendantAdded:Connect(function()
         adoptLeftCenterSources(screen, frame, buttons, shop, icon, text)
     end
 end))
+Runtime.Breathe()
 
 
 
 
 local HUD_RENDER_GUARD_NAME = "ChilliLibraryLeftCenterRenderGuard"
+Runtime.Breathe()
 
 local function enforceHiddenLeftCenterBeforeRender()
     if not rootGui.Parent
@@ -1541,15 +1701,18 @@ local function enforceHiddenLeftCenterBeforeRender()
         leftCenterFrame.Position = hiddenPosition
     end
 end
+Runtime.Breathe()
 
 pcall(function()
     RunService:UnbindFromRenderStep(HUD_RENDER_GUARD_NAME)
 end)
+Runtime.Breathe()
 RunService:BindToRenderStep(
     HUD_RENDER_GUARD_NAME,
     Enum.RenderPriority.Last.Value + 10000,
     enforceHiddenLeftCenterBeforeRender
 )
+Runtime.Breathe()
 
 rootGui.Destroying:Connect(function()
     pcall(function()
@@ -1558,6 +1721,7 @@ rootGui.Destroying:Connect(function()
     disconnectRootConnections()
     disconnectSourceConnections()
 end)
+Runtime.Breathe()
 
 local function applyOriginalStrokeSizing()
     
@@ -1574,6 +1738,7 @@ local function applyOriginalStrokeSizing()
         end
     end)
 end
+Runtime.Breathe()
 
 local function makeDraggable(handle, target, canStart, moved)
     handle.Active = true
@@ -1709,12 +1874,15 @@ local function makeDraggable(handle, target, canStart, moved)
         end,
     }
 end
+Runtime.Breathe()
 
 
 
 
 local SAFE_TOUCH_TAP_DISTANCE = 10
+Runtime.Breathe()
 local safeTouchPresses = setmetatable({}, { __mode = "k" })
+Runtime.Breathe()
 
 local function pointInsideGui(guiObject, point)
     if not guiObject or not guiObject.Parent or not guiObject.Visible then
@@ -1727,6 +1895,7 @@ local function pointInsideGui(guiObject, point)
         and point.Y >= position.Y
         and point.Y <= position.Y + size.Y
 end
+Runtime.Breathe()
 
 trackRootConnection(UserInputService.InputChanged:Connect(function(input)
     local press = safeTouchPresses[input]
@@ -1739,6 +1908,7 @@ trackRootConnection(UserInputService.InputChanged:Connect(function(input)
         press.Cancelled = true
     end
 end))
+Runtime.Breathe()
 
 trackRootConnection(UserInputService.InputEnded:Connect(function(input)
     local press = safeTouchPresses[input]
@@ -1761,6 +1931,7 @@ trackRootConnection(UserInputService.InputEnded:Connect(function(input)
         end
     end)
 end))
+Runtime.Breathe()
 
 local function connectSafeActivation(button, callback)
     button.Active = true
@@ -1797,6 +1968,7 @@ local function connectSafeActivation(button, callback)
         callback()
     end)
 end
+Runtime.Breathe()
 
 local function makeButtonFeedback(button)
     local normalSize = button.Size
@@ -1842,11 +2014,16 @@ local function makeButtonFeedback(button)
         tweenSize(hovered and scaledSize(1.04) or normalSize, 0.09)
     end)
 end
+Runtime.Breathe()
 
 Runtime.menuSize = rootGui:GetAttribute("MenuSize") or mainFrame.Size
+Runtime.Breathe()
 local defaultOpenPosition = UDim2.fromScale(0.5, 0.475)
+Runtime.Breathe()
 Runtime.windowRestPosition = defaultOpenPosition
+Runtime.Breathe()
 Runtime.windowDragController = nil
+Runtime.Breathe()
 local function offsetWindowPosition(position, yScale)
     return UDim2.new(
         position.X.Scale,
@@ -1855,9 +2032,11 @@ local function offsetWindowPosition(position, yScale)
         position.Y.Offset
     )
 end
+Runtime.Breathe()
 local function openingWindowPosition()
     return offsetWindowPosition(Runtime.windowRestPosition, 0.245)
 end
+Runtime.Breathe()
 local function closedWindowPosition()
     return UDim2.new(
         Runtime.windowRestPosition.X.Scale,
@@ -1866,15 +2045,23 @@ local function closedWindowPosition()
         0
     )
 end
+Runtime.Breathe()
 local WINDOW_OPEN_DURATION = 0.34
+Runtime.Breathe()
 local WINDOW_CLOSE_DURATION = 0.26
+Runtime.Breathe()
 local animationLocked = false
+Runtime.Breathe()
 local windowTween = nil
+Runtime.Breathe()
 local windowTweenConnection = nil
+Runtime.Breathe()
 local windowAnimationSerial = 0
+Runtime.Breathe()
 
 
 Runtime.windowAnimating = false
+Runtime.Breathe()
 
 
 
@@ -1902,6 +2089,7 @@ local ContentScale = {
     X = 1,
     Y = 1,
 }
+Runtime.Breathe()
 
 
 function ContentScale.OnChanged(callback)
@@ -1909,6 +2097,7 @@ function ContentScale.OnChanged(callback)
     callback(ContentScale.X, ContentScale.Y)
     return callback
 end
+Runtime.Breathe()
 
 function ContentScale.Refresh()
     local function axisScale(baseValue, currentValue)
@@ -1946,6 +2135,7 @@ function ContentScale.Refresh()
         ContentScale.ReflowTabs()
     end
 end
+Runtime.Breathe()
 
 
 
@@ -1957,36 +2147,47 @@ end
 
 do
     local aspectConstraint = objects.obj24
+    Runtime.Breathe()
     local ratio = aspectConstraint.AspectRatio
+    Runtime.Breathe()
     
     
     
     
     aspectConstraint.Parent = nil
+    Runtime.Breathe()
 
     
     
     local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
+    Runtime.Breathe()
     if viewport.X < 1 or viewport.Y < 1 then
         viewport = Vector2.new(1280, 720)
     end
+    Runtime.Breathe()
 
     local topLeftInset, bottomRightInset = Vector2.new(0, 0), Vector2.new(0, 0)
+    Runtime.Breathe()
     pcall(function()
         topLeftInset, bottomRightInset = GuiService:GetGuiInset()
     end)
+    Runtime.Breathe()
 
     local regionX = math.max(
         viewport.X - topLeftInset.X - bottomRightInset.X,
         1
     )
+    Runtime.Breathe()
     local regionY = math.max(
         viewport.Y - topLeftInset.Y - bottomRightInset.Y,
         1
     )
+    Runtime.Breathe()
 
     local width = Runtime.menuSize.X.Scale * regionX
+    Runtime.Breathe()
     local height = Runtime.menuSize.Y.Scale * regionY
+    Runtime.Breathe()
     if ratio > 0 then
         if width / height > ratio then
             width = height * ratio
@@ -1994,6 +2195,7 @@ do
             height = width / ratio
         end
     end
+    Runtime.Breathe()
 
     
     
@@ -2010,12 +2212,17 @@ do
         width = width * mobileMultiplier
         height = height * mobileMultiplier
     end
+    Runtime.Breathe()
 
     Runtime.menuSize = UDim2.fromScale(width / regionX, height / regionY)
+    Runtime.Breathe()
     rootGui:SetAttribute("MenuSize", Runtime.menuSize)
+    Runtime.Breathe()
     mainFrame.Size = Runtime.menuSize
+    Runtime.Breathe()
     ContentScale.Base = Runtime.menuSize
 end
+Runtime.Breathe()
 
 local function setLeftCenterHidden(hidden)
     hudAnimationSerial = hudAnimationSerial + 1
@@ -2167,6 +2374,7 @@ local function setLeftCenterHidden(hidden)
     end)
     activeHudTween:Play()
 end
+Runtime.Breathe()
 
 local function cancelWindowTween()
     windowAnimationSerial = windowAnimationSerial + 1
@@ -2179,6 +2387,7 @@ local function cancelWindowTween()
         windowTween = nil
     end
 end
+Runtime.Breathe()
 
 local function tweenWindowPosition(target, info, completed)
     cancelWindowTween()
@@ -2202,6 +2411,7 @@ local function tweenWindowPosition(target, info, completed)
     end)
     tween:Play()
 end
+Runtime.Breathe()
 
 local function playOpenAnimation(completed)
     if Runtime.chilliIsOpen then
@@ -2230,6 +2440,7 @@ local function playOpenAnimation(completed)
         end
     end)
 end
+Runtime.Breathe()
 
 local function playCloseAnimation()
     if not Runtime.chilliIsOpen then
@@ -2257,6 +2468,7 @@ local function playCloseAnimation()
         Runtime.windowAnimating = false
     end)
 end
+Runtime.Breathe()
 
 
 
@@ -2278,35 +2490,56 @@ local RESIZE_LIMITS = {
     MinHeight = 0.22,
     MaxHeight = 0.98,
 }
+Runtime.Breathe()
 
 
 
 
 
 local RESIZE_KEEPS_OPTION_WIDTH = false
+Runtime.Breathe()
 
 local resizeGrip = Instance.new("TextButton")
+Runtime.Breathe()
 resizeGrip.Name = "ResizeGrip"
+Runtime.Breathe()
 resizeGrip.Active = true
+Runtime.Breathe()
 resizeGrip.AutoButtonColor = false
+Runtime.Breathe()
 resizeGrip.AnchorPoint = Vector2.new(1, 1)
+Runtime.Breathe()
 resizeGrip.BackgroundTransparency = 1
+Runtime.Breathe()
 resizeGrip.BorderSizePixel = 0
+Runtime.Breathe()
 resizeGrip.Position = UDim2.fromScale(0.998, 0.995)
+Runtime.Breathe()
 resizeGrip.Selectable = false
+Runtime.Breathe()
 resizeGrip.Size = UDim2.fromScale(0.05, 0.05)
+Runtime.Breathe()
 resizeGrip.Text = ""
+Runtime.Breathe()
 resizeGrip.ZIndex = 120
+Runtime.Breathe()
 resizeGrip.Parent = mainFrame
+Runtime.Breathe()
 
 local resizeGripAspect = Instance.new("UIAspectRatioConstraint")
+Runtime.Breathe()
 resizeGripAspect.AspectRatio = 1
+Runtime.Breathe()
 resizeGripAspect.AspectType = Enum.AspectType.FitWithinMaxSize
+Runtime.Breathe()
 resizeGripAspect.DominantAxis = Enum.DominantAxis.Width
+Runtime.Breathe()
 resizeGripAspect.Parent = resizeGrip
+Runtime.Breathe()
 
 
 local resizeGripBars = {}
+Runtime.Breathe()
 for _, bar in ipairs({
     { 0.5, 0.5, 0.9 },
     { 0.68, 0.68, 0.54 },
@@ -2326,6 +2559,7 @@ for _, bar in ipairs({
     piece.Parent = resizeGrip
     table.insert(resizeGripBars, piece)
 end
+Runtime.Breathe()
 
 local function setResizeGripHighlight(highlighted)
     for _, piece in ipairs(resizeGripBars) do
@@ -2334,11 +2568,16 @@ local function setResizeGripHighlight(highlighted)
         }):Play()
     end
 end
+Runtime.Breathe()
 
 local resizeDragging = false
+Runtime.Breathe()
 local resizeActiveTouch = nil
+Runtime.Breathe()
 local resizeStartPointer = Vector2.new(0, 0)
+Runtime.Breathe()
 local resizeStartSize = Vector2.new(0, 0)
+Runtime.Breathe()
 
 local function applyResizeSize(widthPixels, heightPixels)
     local region = rootGui.AbsoluteSize
@@ -2361,6 +2600,7 @@ local function applyResizeSize(widthPixels, heightPixels)
     mainFrame.Size = Runtime.menuSize
     ContentScale.Refresh()
 end
+Runtime.Breathe()
 
 local function resizeFromInputPosition(position)
     local delta = Vector2.new(position.X, position.Y) - resizeStartPointer
@@ -2369,16 +2609,19 @@ local function resizeFromInputPosition(position)
         resizeStartSize.Y + delta.Y * 2
     )
 end
+Runtime.Breathe()
 
 resizeGrip.MouseEnter:Connect(function()
     setResizeGripHighlight(true)
 end)
+Runtime.Breathe()
 
 resizeGrip.MouseLeave:Connect(function()
     if not resizeDragging then
         setResizeGripHighlight(false)
     end
 end)
+Runtime.Breathe()
 
 resizeGrip.InputBegan:Connect(function(input)
     if resizeDragging or input.UserInputState ~= Enum.UserInputState.Begin then
@@ -2407,6 +2650,7 @@ resizeGrip.InputBegan:Connect(function(input)
     resizeStartSize = mainFrame.AbsoluteSize
     setResizeGripHighlight(true)
 end)
+Runtime.Breathe()
 
 trackRootConnection(UserInputService.InputChanged:Connect(function(input)
     if not resizeDragging then
@@ -2420,6 +2664,7 @@ trackRootConnection(UserInputService.InputChanged:Connect(function(input)
         resizeFromInputPosition(input.Position)
     end
 end))
+Runtime.Breathe()
 
 trackRootConnection(UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -2432,6 +2677,7 @@ trackRootConnection(UserInputService.InputEnded:Connect(function(input)
         end
     end
 end))
+Runtime.Breathe()
 
 
 ContentScale.OnChanged(function(scaleX, scaleY)
@@ -2441,6 +2687,7 @@ ContentScale.OnChanged(function(scaleX, scaleY)
     )
     resizeGrip.Size = UDim2.fromScale(0.05 / scaleX, 0.05 / scaleY)
 end)
+Runtime.Breathe()
 
 
 
@@ -2483,18 +2730,21 @@ ContentScale.OnChanged(function(scaleX, scaleY)
         0
     )
 end)
+Runtime.Breathe()
 
 local normalTextFont = Font.new(
     "rbxasset://fonts/families/GothamSSm.json",
     Enum.FontWeight.ExtraBold,
     Enum.FontStyle.Normal
 )
+Runtime.Breathe()
 
 local italicTextFont = Font.new(
     "rbxasset://fonts/families/GothamSSm.json",
     Enum.FontWeight.ExtraBold,
     Enum.FontStyle.Italic
 )
+Runtime.Breathe()
 
 local shinyTextGradient = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
@@ -2502,11 +2752,13 @@ local shinyTextGradient = ColorSequence.new({
     ColorSequenceKeypoint.new(0.519031167, Color3.fromRGB(221, 221, 221)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(236, 236, 236)),
 })
+Runtime.Breathe()
 
 local blueStrokeGradient = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 36, 84)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 31, 54)),
 })
+Runtime.Breathe()
 
 local function clearDirectGradients(container)
     for _, child in ipairs(container:GetChildren()) do
@@ -2515,6 +2767,7 @@ local function clearDirectGradients(container)
         end
     end
 end
+Runtime.Breathe()
 
 local function getTextStroke(label)
     local stroke = label:FindFirstChildOfClass("UIStroke")
@@ -2525,6 +2778,7 @@ local function getTextStroke(label)
     end
     return stroke
 end
+Runtime.Breathe()
 
 local function configureScaledStroke(stroke, color, thickness)
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
@@ -2539,6 +2793,7 @@ local function configureScaledStroke(stroke, color, thickness)
         stroke.StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize
     end)
 end
+Runtime.Breathe()
 
 local function applyShinyTextStyle(label, fontFace)
     if fontFace then
@@ -2573,6 +2828,7 @@ local function applyShinyTextStyle(label, fontFace)
     textGradient.Transparency = NumberSequence.new(0)
     textGradient.Parent = label
 end
+Runtime.Breathe()
 
 local function applyPlainTextStyle(label)
     label.FontFace = normalTextFont
@@ -2589,18 +2845,21 @@ local function applyPlainTextStyle(label)
     clearDirectGradients(stroke)
     configureScaledStroke(stroke, Color3.fromRGB(0, 0, 0), 0.07999999821186066)
 end
+Runtime.Breathe()
 
 local rebirthOuterGradient = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 193, 194)),
     ColorSequenceKeypoint.new(0.0570934266, Color3.fromRGB(255, 132, 123)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(239, 28, 28)),
 })
+Runtime.Breathe()
 
 local rebirthInnerGradient = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 193, 194)),
     ColorSequenceKeypoint.new(0.0155709349, Color3.fromRGB(255, 132, 123)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(239, 28, 28)),
 })
+Runtime.Breathe()
 
 local function addRedGradient(parent, name, color)
     local gradient = Instance.new("UIGradient")
@@ -2610,6 +2869,7 @@ local function addRedGradient(parent, name, color)
     gradient.Parent = parent
     return gradient
 end
+Runtime.Breathe()
 
 local function addScaledStroke(parent, mode, thickness)
     local stroke = Instance.new("UIStroke")
@@ -2626,6 +2886,7 @@ local function addScaledStroke(parent, mode, thickness)
     stroke.Parent = parent
     return stroke
 end
+Runtime.Breathe()
 
 local function createRebirthStyleButton(parent, text, layoutOrder)
     local button = Instance.new("TextButton")
@@ -2725,20 +2986,31 @@ local function createRebirthStyleButton(parent, text, layoutOrder)
 
     return button
 end
+Runtime.Breathe()
 
 local sideButtons = Instance.new("Frame")
+Runtime.Breathe()
 sideButtons.Name = "SideButtons"
+Runtime.Breathe()
 sideButtons.Active = false
+Runtime.Breathe()
 sideButtons.AnchorPoint = Vector2.new(1, 0.5)
+Runtime.Breathe()
 sideButtons.BackgroundTransparency = 1
+Runtime.Breathe()
 sideButtons.BorderSizePixel = 0
+Runtime.Breathe()
 
 
 
 sideButtons.Position = UDim2.new(-0.025, 0, 0.558, 0)
+Runtime.Breathe()
 sideButtons.Size = UDim2.new(0.2612044513, 0, 1, 0)
+Runtime.Breathe()
 sideButtons.ZIndex = 99
+Runtime.Breathe()
 sideButtons.Parent = mainFrame
+Runtime.Breathe()
 
 
 
@@ -2757,10 +3029,13 @@ local ACCENT_GRADIENT = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(58, 255, 55)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 109, 0)),
 })
+Runtime.Breathe()
 
 
 local ROW_ASPECT = 10
+Runtime.Breathe()
 local ROW_WIDTH_SCALE = 0.97
+Runtime.Breathe()
 
 
 
@@ -2772,39 +3047,48 @@ local CONTROL_LAYOUT = {
     WideWidth = 0.28,
     WideCenterX = 0.845,
 }
+Runtime.Breathe()
 
 
 
 local CHEVRON_COLOR = Color3.fromRGB(58, 255, 55)
+Runtime.Breathe()
 
 
 local UNIT_CHEVRON_COLOR = Color3.fromRGB(255, 255, 255)
+Runtime.Breathe()
 
 
 local MAX_CHIPS_PER_LINE = 4
+Runtime.Breathe()
 
 
 
 
 local BALANCE_CHIP_LINES = false
+Runtime.Breathe()
 
 
 
 local ACCENT_WIDTH_RATIO = 0.17
+Runtime.Breathe()
 
 
 
 local SEARCH_MIN_OPTIONS = 5
+Runtime.Breathe()
 
 
 
 
 local ROW_ASPECT_WITH_NOTE = 7.5
+Runtime.Breathe()
 
 
 
 
 local NOTE_TITLE_SCALE = 0.9
+Runtime.Breathe()
 
 local function addAccentGradient(parent)
     local gradient = Instance.new("UIGradient")
@@ -2814,6 +3098,7 @@ local function addAccentGradient(parent)
     gradient.Parent = parent
     return gradient
 end
+Runtime.Breathe()
 
 local function attachScaleFeedback(button, hoverScale, pressScale)
     local scale = button:FindFirstChildOfClass("UIScale")
@@ -2856,6 +3141,7 @@ local function attachScaleFeedback(button, hoverScale, pressScale)
 
     return scale
 end
+Runtime.Breathe()
 
 
 local function buildRowPlate(parent, labelText)
@@ -2892,6 +3178,7 @@ local function buildRowPlate(parent, labelText)
 
     return main, label
 end
+Runtime.Breathe()
 
 
 local function buildFixedRow(name, labelText)
@@ -2914,17 +3201,20 @@ local function buildFixedRow(name, labelText)
     local main, label = buildRowPlate(row, labelText)
     return row, main, label
 end
+Runtime.Breathe()
 
 
 
 
 Runtime.activeDropdownCloser = nil
+Runtime.Breathe()
 
 local function closeActiveDropdown()
     if Runtime.activeDropdownCloser then
         Runtime.activeDropdownCloser()
     end
 end
+Runtime.Breathe()
 
 
 
@@ -3874,6 +4164,7 @@ local function createDropdownRow(
         end,
     }
 end
+Runtime.Breathe()
 
 
 
@@ -3994,6 +4285,7 @@ local function createButtonRow(name, labelText, buttonText, confirmText)
 
     return row, playPress
 end
+Runtime.Breathe()
 
 
 
@@ -4077,6 +4369,7 @@ local function createInputRow(name, labelText, placeholder)
 
     return row, normalizeText
 end
+Runtime.Breathe()
 
 
 
@@ -4135,6 +4428,7 @@ local function safeCallback(callback, ...)
         end
     end)
 end
+Runtime.Breathe()
 
 local function copyTable(source)
     local result = {}
@@ -4145,6 +4439,7 @@ local function copyTable(source)
     end
     return result
 end
+Runtime.Breathe()
 
 local function normalizeConfig(config, fallbackName)
     if type(config) == "string" then
@@ -4165,12 +4460,14 @@ local function normalizeConfig(config, fallbackName)
     assert(result.Name ~= "", "Name khong duoc de trong")
     return result
 end
+Runtime.Breathe()
 
 local function findDescendant(root, name)
     local found = root:FindFirstChild(name, true)
     assert(found, ("Khong tim thay thanh phan UI '%s'"):format(name))
     return found
 end
+Runtime.Breathe()
 
 
 
@@ -5582,6 +5879,7 @@ local function createLibrarySliderRow(config)
         end,
     }
 end
+Runtime.Breathe()
 
 local function createLibraryToggleRow(config)
     local row, main, label = buildFixedRow(config.Name, config.Name)
@@ -5695,6 +5993,7 @@ local function createLibraryToggleRow(config)
         end,
     }
 end
+Runtime.Breathe()
 
 local function createLibraryTextRow(config)
     local displayText = tostring(config.Text or config.Value or config.Name)
@@ -5764,6 +6063,7 @@ local function createLibraryTextRow(config)
         SetNote = setNote,
     }
 end
+Runtime.Breathe()
 
 
 
@@ -5775,9 +6075,13 @@ end
 
 
 local NOTE_LEFT = 0.025
+Runtime.Breathe()
 local NOTE_GAP = 0.02
+Runtime.Breathe()
 local NOTE_MAX_WIDTH = 0.94
+Runtime.Breathe()
 local NOTE_MIN_WIDTH = 0.3
+Runtime.Breathe()
 
 local function noteWidthFor(control)
     if not control then
@@ -5793,6 +6097,7 @@ local function noteWidthFor(control)
         NOTE_MAX_WIDTH
     )
 end
+Runtime.Breathe()
 
 local function addNoteToButtonRow(row, config, button)
     local vScale = ROW_ASPECT_WITH_NOTE / ROW_ASPECT
@@ -5861,6 +6166,7 @@ local function addNoteToButtonRow(row, config, button)
         SetNote = setNote,
     }
 end
+Runtime.Breathe()
 
 local function createLibraryButtonRow(config)
     local row, playPress = createButtonRow(
@@ -5890,6 +6196,7 @@ local function createLibraryButtonRow(config)
         SetNote = noteController and noteController.SetNote,
     }
 end
+Runtime.Breathe()
 
 local function createLibraryInputRow(config)
     local row, normalizeText = createInputRow(
@@ -5978,6 +6285,7 @@ local function createLibraryInputRow(config)
         end,
     }
 end
+Runtime.Breathe()
 
 local function createLibraryNoteToggleRow(config)
     
@@ -6037,6 +6345,7 @@ local function createLibraryNoteToggleRow(config)
     end
     return row, controller
 end
+Runtime.Breathe()
 
 
 
@@ -6278,6 +6587,7 @@ local function createLibraryDropdownRow(config, forceMulti, actionMode)
         end or nil,
     }
 end
+Runtime.Breathe()
 
 
 
@@ -6288,25 +6598,38 @@ local TAB_LAYOUT = {
     NormalHeight = 0.130,
     GapRatio = 0.023 / 0.130,
 }
+Runtime.Breathe()
 local SECTION_ARROW = {
     Scale = 0.65,
     Spacing = 0.15,
     Arm = 0.22,
 }
+Runtime.Breathe()
 local SECTION_HEADER_ASPECT = 16
+Runtime.Breathe()
 
 local sideButtonLayout = Instance.new("UIListLayout")
+Runtime.Breathe()
 sideButtonLayout.FillDirection = Enum.FillDirection.Vertical
+Runtime.Breathe()
 sideButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+Runtime.Breathe()
 
 sideButtonLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+Runtime.Breathe()
 sideButtonLayout.SortOrder = Enum.SortOrder.LayoutOrder
+Runtime.Breathe()
 sideButtonLayout.Parent = sideButtons
+Runtime.Breathe()
 
 local sideButtonPadding = Instance.new("UIPadding")
+Runtime.Breathe()
 sideButtonPadding.Name = "TabPadding"
+Runtime.Breathe()
 sideButtonPadding.PaddingTop = UDim.new(0.067, 0)
+Runtime.Breathe()
 sideButtonPadding.Parent = sideButtons
+Runtime.Breathe()
 
 
 
@@ -6314,6 +6637,7 @@ sideButtonPadding.Parent = sideButtons
 
 
 local TabColumns = {}
+Runtime.Breathe()
 do
     local function buildColumn(name, anchorX, edgeX)
         local frame = Instance.new("Frame")
@@ -6348,6 +6672,7 @@ do
             EdgeX = edgeX,
         }
     end
+    Runtime.Breathe()
 
     TabColumns.Left = {
         Frame = sideButtons,
@@ -6360,11 +6685,16 @@ do
         Width = 0.2612044513,
         GapRatio = TAB_LAYOUT.GapRatio,
     }
+    Runtime.Breathe()
     TabColumns.Right = buildColumn("SideButtonsRight", 0, 1.025)
+    Runtime.Breathe()
     TabColumns.Right.CenterY = 0.558
+    Runtime.Breathe()
     TabColumns.Right.TopPadding = 0.067
+    Runtime.Breathe()
     TabColumns.Right.Width = 0.2612044513
 end
+Runtime.Breathe()
 
 
 
@@ -6390,6 +6720,7 @@ ContentScale.OnChanged(function(scaleX, scaleY)
         )
     end
 end)
+Runtime.Breathe()
 
 
 local function createSectionHeader(title, layoutOrder, clipViewport)
@@ -6569,37 +6900,59 @@ local function createSectionHeader(title, layoutOrder, clipViewport)
 
     return header, arrow, button
 end
+Runtime.Breathe()
 
 
 
 
 local WindowMethods = {}
+Runtime.Breathe()
 local TabMethods = {}
+Runtime.Breathe()
 local SectionMethods = {}
+Runtime.Breathe()
 local OptionMethods = {}
+Runtime.Breathe()
 local StateMethods = {}
+Runtime.Breathe()
 local ExclusiveGroupMethods = {}
+Runtime.Breathe()
 local SurfaceMethods = {}
+Runtime.Breathe()
 local ApiImpl = {}
+Runtime.Breathe()
 Runtime.optionChangedHook = nil
+Runtime.Breathe()
 Runtime.stateChangedHook = nil
+Runtime.Breathe()
 
 
 Runtime.configLoadedHook = nil
+Runtime.Breathe()
 
 
 Runtime.quickRefreshHook = nil
+Runtime.Breathe()
 
 WindowMethods.__index = WindowMethods
+Runtime.Breathe()
 TabMethods.__index = TabMethods
+Runtime.Breathe()
 SectionMethods.__index = SectionMethods
+Runtime.Breathe()
 OptionMethods.__index = OptionMethods
+Runtime.Breathe()
 StateMethods.__index = StateMethods
+Runtime.Breathe()
 ExclusiveGroupMethods.__index = ExclusiveGroupMethods
+Runtime.Breathe()
 SurfaceMethods.__index = SurfaceMethods
+Runtime.Breathe()
 
 local STATE_NO_CHANGE = {}
+Runtime.Breathe()
 local MAX_STATE_TRANSACTION_STEPS = 256
+Runtime.Breathe()
 
 local function assertObject(object, expectedKind)
     assert(
@@ -6609,6 +6962,7 @@ local function assertObject(object, expectedKind)
         ("API nay chi dung duoc tren %s con hoat dong"):format(expectedKind)
     )
 end
+Runtime.Breathe()
 
 local function copyLinkedValue(value, visited)
     if type(value) ~= "table" then
@@ -6629,6 +6983,7 @@ local function copyLinkedValue(value, visited)
     visited[value] = nil
     return result
 end
+Runtime.Breathe()
 
 local function linkedValuesEqual(left, right, visited)
     if left == right then
@@ -6654,6 +7009,7 @@ local function linkedValuesEqual(left, right, visited)
     end
     return true
 end
+Runtime.Breathe()
 
 local function callStateTransform(callback, fallback, ...)
     if type(callback) ~= "function" then
@@ -6670,6 +7026,7 @@ local function callStateTransform(callback, fallback, ...)
     end
     return result
 end
+Runtime.Breathe()
 
 local function resolveState(object)
     if type(object) == "table" and object._kind == "State" then
@@ -6683,6 +7040,7 @@ local function resolveState(object)
     end
     error("Provide a State or a feature with a state", 3)
 end
+Runtime.Breathe()
 
 local function choosePrimaryOption(state)
     state._primaryOption = nil
@@ -6700,6 +7058,7 @@ local function choosePrimaryOption(state)
     end
     state._primaryOption = fallback
 end
+Runtime.Breathe()
 
 local function syncStateViews(state)
     for option, binding in pairs(state._views) do
@@ -6736,6 +7095,7 @@ local function syncStateViews(state)
         choosePrimaryOption(state)
     end
 end
+Runtime.Breathe()
 
 local function markStateChanged(transaction, state)
     if transaction.changed[state] then
@@ -6744,6 +7104,7 @@ local function markStateChanged(transaction, state)
     transaction.changed[state] = true
     table.insert(transaction.order, state)
 end
+Runtime.Breathe()
 
 ApiImpl[1] = function(self, value, transaction, sourceOption)
     if self._destroyed then
@@ -6806,10 +7167,12 @@ ApiImpl[1] = function(self, value, transaction, sourceOption)
     end
     return true
 end
+Runtime.Breathe()
 
 local function stateUsesPrimaryCallback(state)
     return not state._registered or type(state.Callback) ~= "function"
 end
+Runtime.Breathe()
 
 local function runStateTransaction(
     state,
@@ -6895,6 +7258,7 @@ local function runStateTransaction(
     end
     return #transaction.order > 0
 end
+Runtime.Breathe()
 
 local function createStateObject(window, config, registered)
     local state = setmetatable({
@@ -6915,17 +7279,20 @@ local function createStateObject(window, config, registered)
     window._stateObjects[state] = true
     return state
 end
+Runtime.Breathe()
 
 ApiImpl[2] = function(self)
     assertObject(self, "State")
     return copyLinkedValue(self.Value)
 end
+Runtime.Breathe()
 
 ApiImpl[3] = function(self, value, fireCallback)
     assertObject(self, "State")
     runStateTransaction(self, value, fireCallback, nil)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[4] = function(self, callback)
     assertObject(self, "State")
@@ -6940,6 +7307,7 @@ ApiImpl[4] = function(self, callback)
     table.insert(self._subscribers, connection)
     return connection
 end
+Runtime.Breathe()
 
 ApiImpl[5] = function(self, target, transform, options)
     assertObject(self, "State")
@@ -6971,6 +7339,7 @@ ApiImpl[5] = function(self, target, transform, options)
     end
     return link
 end
+Runtime.Breathe()
 
 ApiImpl[6] = function(self, target, targetValue, options)
     if targetValue == nil then
@@ -6983,6 +7352,7 @@ ApiImpl[6] = function(self, target, targetValue, options)
         return STATE_NO_CHANGE
     end, options)
 end
+Runtime.Breathe()
 
 ApiImpl[7] = function(self, target, targetValue, options)
     if targetValue == nil then
@@ -6995,6 +7365,7 @@ ApiImpl[7] = function(self, target, targetValue, options)
         return STATE_NO_CHANGE
     end, options)
 end
+Runtime.Breathe()
 
 ApiImpl[8] = function(self,
     target,
@@ -7018,6 +7389,7 @@ ApiImpl[8] = function(self,
         return STATE_NO_CHANGE
     end, options)
 end
+Runtime.Breathe()
 
 ApiImpl[9] = function(self, targets, transform, options)
     assert(type(targets) == "table", "LinkMany can danh sach target")
@@ -7036,6 +7408,7 @@ ApiImpl[9] = function(self, targets, transform, options)
     end
     return bundle
 end
+Runtime.Breathe()
 
 ApiImpl[10] = function(self, targets, targetValue, options)
     assert(type(targets) == "table", "LinkManyWhenTrue can danh sach target")
@@ -7057,12 +7430,14 @@ ApiImpl[10] = function(self, targets, targetValue, options)
     end
     return bundle
 end
+Runtime.Breathe()
 
 ApiImpl[11] = function(self, target, options)
     return ApiImpl[5](self, target, function(value)
         return not value
     end, options)
 end
+Runtime.Breathe()
 
 ApiImpl[12] = function(self,
     target,
@@ -7087,6 +7462,7 @@ ApiImpl[12] = function(self,
     end
     return pair
 end
+Runtime.Breathe()
 
 
 
@@ -7135,6 +7511,7 @@ ApiImpl[13] = function(self)
         end
     end
 end
+Runtime.Breathe()
 
 ApiImpl[14] = function(self)
     local count = 0
@@ -7145,6 +7522,7 @@ ApiImpl[14] = function(self)
     end
     return count
 end
+Runtime.Breathe()
 
 ApiImpl[15] = function(self, excludedState)
     local oldestState = nil
@@ -7160,6 +7538,7 @@ ApiImpl[15] = function(self, excludedState)
     end
     return oldestState
 end
+Runtime.Breathe()
 
 ApiImpl[16] = function(self,
     preferredState,
@@ -7187,6 +7566,7 @@ ApiImpl[16] = function(self,
         end
     end
 end
+Runtime.Breathe()
 
 ApiImpl[17] = function(self, state, value)
     if value ~= false or state.Value ~= true then
@@ -7194,6 +7574,7 @@ ApiImpl[17] = function(self, state, value)
     end
     return ApiImpl[14](self) - 1 >= self.MinActive
 end
+Runtime.Breathe()
 
 ApiImpl[18] = function(self, state, transaction)
     if state.Value == true then
@@ -7204,6 +7585,7 @@ ApiImpl[18] = function(self, state, transaction)
         self._activationOrder[state] = nil
     end
 end
+Runtime.Breathe()
 
 ApiImpl[19] = function(self, object)
     assertObject(self, "ExclusiveGroup")
@@ -7221,6 +7603,7 @@ ApiImpl[19] = function(self, object)
     end
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[20] = function(self, object)
     assertObject(self, "ExclusiveGroup")
@@ -7230,6 +7613,7 @@ ApiImpl[20] = function(self, object)
     state._groups[self] = nil
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[21] = function(self, objects)
     assertObject(self, "ExclusiveGroup")
@@ -7239,6 +7623,7 @@ ApiImpl[21] = function(self, objects)
     end
     return self
 end
+Runtime.Breathe()
 
 
 
@@ -7249,6 +7634,7 @@ ApiImpl[22] = function(self, object, fireCallback)
     ApiImpl[3](state, true, fireCallback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[23] = function(self)
     assertObject(self, "ExclusiveGroup")
@@ -7264,11 +7650,13 @@ ApiImpl[23] = function(self)
     end)
     return active
 end
+Runtime.Breathe()
 
 ApiImpl[24] = function(self)
     assertObject(self, "ExclusiveGroup")
     return self.MinActive, self.MaxActive
 end
+Runtime.Breathe()
 
 ApiImpl[25] = function(self, maximum, fireCallback)
     assertObject(self, "ExclusiveGroup")
@@ -7282,6 +7670,7 @@ ApiImpl[25] = function(self, maximum, fireCallback)
     ApiImpl[16](self, nil, nil, fireCallback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[26] = function(self, minimum)
     assertObject(self, "ExclusiveGroup")
@@ -7295,6 +7684,7 @@ ApiImpl[26] = function(self, minimum)
     self.AllowNone = self.MinActive == 0
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[27] = function(self, allowNone)
     assertObject(self, "ExclusiveGroup")
@@ -7302,6 +7692,7 @@ ApiImpl[27] = function(self, allowNone)
     self.AllowNone = self.MinActive == 0
     return self
 end
+Runtime.Breathe()
 
 
 ApiImpl[28] = function(self)
@@ -7322,6 +7713,7 @@ ApiImpl[28] = function(self)
         end
     end
 end
+Runtime.Breathe()
 
 local function bindOptionToState(option, state, config)
     assertObject(state, "State")
@@ -7346,6 +7738,7 @@ local function bindOptionToState(option, state, config)
     end
     syncStateViews(state)
 end
+Runtime.Breathe()
 
 local function createOptionHandle(section, optionType, row, controller)
     local option = setmetatable({
@@ -7365,6 +7758,7 @@ local function createOptionHandle(section, optionType, row, controller)
     table.insert(section.Options, option)
     return option
 end
+Runtime.Breathe()
 
 ApiImpl[29] = function(self)
     assertObject(self, "Option")
@@ -7374,6 +7768,7 @@ ApiImpl[29] = function(self)
     end
     return nil
 end
+Runtime.Breathe()
 
 ApiImpl[30] = function(self, value, fireCallback)
     assertObject(self, "Option")
@@ -7400,12 +7795,14 @@ ApiImpl[30] = function(self, value, fireCallback)
     setter(value, fireCallback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[31] = function(self)
     assertObject(self, "Option")
     assert(self.State, ("%s khong co state"):format(self.Type))
     return self.State
 end
+Runtime.Breathe()
 
 ApiImpl[32] = function(self, state, config)
     assertObject(self, "Option")
@@ -7428,23 +7825,28 @@ ApiImpl[32] = function(self, state, config)
     bindOptionToState(self, state, type(config) == "table" and config or {})
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[33] = function(self, other, config)
     return ApiImpl[32](self, resolveState(other), config)
 end
+Runtime.Breathe()
 
 
 ApiImpl[34] = function(self, target, transform, options)
     return ApiImpl[5](ApiImpl[31](self), target, transform, options)
 end
+Runtime.Breathe()
 
 ApiImpl[35] = function(self, target, targetValue, options)
     return ApiImpl[6](ApiImpl[31](self), target, targetValue, options)
 end
+Runtime.Breathe()
 
 ApiImpl[36] = function(self, target, targetValue, options)
     return ApiImpl[7](ApiImpl[31](self), target, targetValue, options)
 end
+Runtime.Breathe()
 
 ApiImpl[37] = function(self, target, predicate, targetValue, options)
     return ApiImpl[8](ApiImpl[31](self),
@@ -7454,10 +7856,12 @@ ApiImpl[37] = function(self, target, predicate, targetValue, options)
         options
     )
 end
+Runtime.Breathe()
 
 ApiImpl[38] = function(self, targets, transform, options)
     return ApiImpl[9](ApiImpl[31](self), targets, transform, options)
 end
+Runtime.Breathe()
 
 ApiImpl[39] = function(self, targets, targetValue, options)
     return ApiImpl[10](ApiImpl[31](self),
@@ -7466,10 +7870,12 @@ ApiImpl[39] = function(self, targets, targetValue, options)
         options
     )
 end
+Runtime.Breathe()
 
 ApiImpl[40] = function(self, target, options)
     return ApiImpl[11](ApiImpl[31](self), target, options)
 end
+Runtime.Breathe()
 
 ApiImpl[41] = function(self,
     target,
@@ -7484,6 +7890,7 @@ ApiImpl[41] = function(self,
         options
     )
 end
+Runtime.Breathe()
 
 ApiImpl[42] = function(self, group)
     assertObject(self, "Option")
@@ -7491,6 +7898,7 @@ ApiImpl[42] = function(self, group)
     ApiImpl[19](group, self)
     return self
 end
+Runtime.Breathe()
 
 
 
@@ -7507,6 +7915,7 @@ local function dependencyMatches(dependency)
     end
     return linkedValuesEqual(value, dependency.Expected)
 end
+Runtime.Breathe()
 
 
 
@@ -7545,6 +7954,7 @@ local function resolvedOptionVisibility(option, seen)
     end
     return true
 end
+Runtime.Breathe()
 
 ApiImpl[43] = function(self)
     
@@ -7626,6 +8036,7 @@ ApiImpl[43] = function(self)
     syncExpandedHeight()
     return host
 end
+Runtime.Breathe()
 
 ApiImpl[44] = function(self, animated)
     assertObject(self, "Option")
@@ -7747,18 +8158,21 @@ ApiImpl[44] = function(self, animated)
     task.defer(self.Section._refreshHeight)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[45] = function(self, visible, animated)
     assertObject(self, "Option")
     self._manualVisible = visible == true
     return ApiImpl[44](self, animated)
 end
+Runtime.Breathe()
 
 ApiImpl[46] = function(self)
     assertObject(self, "Option")
     local visibilityObject = self._visibilityHost or self.Instance
     return visibilityObject.Visible == true
 end
+Runtime.Breathe()
 
 
 
@@ -7831,6 +8245,7 @@ ApiImpl[47] = function(self, source, options)
     ApiImpl[44](self, false)
     return dependency
 end
+Runtime.Breathe()
 
 
 
@@ -7884,6 +8299,7 @@ ApiImpl[48] = function(self, source)
     ApiImpl[44](self, false)
     return self
 end
+Runtime.Breathe()
 
 
 
@@ -7895,6 +8311,7 @@ ApiImpl[49] = function(self)
     end
     return list
 end
+Runtime.Breathe()
 
 ApiImpl[50] = function(self, ...)
     assertObject(self, "Option")
@@ -7905,6 +8322,7 @@ ApiImpl[50] = function(self, ...)
     end
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[51] = function(self, ...)
     assertObject(self, "Option")
@@ -7919,6 +8337,7 @@ ApiImpl[51] = function(self, ...)
     end
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[52] = function(self)
     assertObject(self, "Option")
@@ -7926,6 +8345,7 @@ ApiImpl[52] = function(self)
     assert(getter, ("%s khong ho tro Note"):format(self.Type))
     return getter()
 end
+Runtime.Breathe()
 
 ApiImpl[53] = function(self, note)
     assertObject(self, "Option")
@@ -7938,6 +8358,7 @@ ApiImpl[53] = function(self, note)
     end
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[54] = function(self, options, selectedValue, fireCallback)
     assertObject(self, "Option")
@@ -7947,6 +8368,7 @@ ApiImpl[54] = function(self, options, selectedValue, fireCallback)
     ApiImpl[30](self, ApiImpl[29](self), fireCallback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[55] = function(self)
     assertObject(self, "Option")
@@ -7954,6 +8376,7 @@ ApiImpl[55] = function(self)
     assert(getter, ("%s khong phai Slider/Slidebar"):format(self.Type))
     return getter()
 end
+Runtime.Breathe()
 
 ApiImpl[56] = function(self, minimum, maximum, fireCallback)
     assertObject(self, "Option")
@@ -7963,6 +8386,7 @@ ApiImpl[56] = function(self, minimum, maximum, fireCallback)
     ApiImpl[30](self, ApiImpl[29](self), fireCallback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[57] = function(self, minimum, fireCallback)
     assertObject(self, "Option")
@@ -7972,6 +8396,7 @@ ApiImpl[57] = function(self, minimum, fireCallback)
     ApiImpl[30](self, ApiImpl[29](self), fireCallback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[58] = function(self, maximum, fireCallback)
     assertObject(self, "Option")
@@ -7981,6 +8406,7 @@ ApiImpl[58] = function(self, maximum, fireCallback)
     ApiImpl[30](self, ApiImpl[29](self), fireCallback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[59] = function(self)
     assertObject(self, "Option")
@@ -7988,6 +8414,7 @@ ApiImpl[59] = function(self)
     assert(getter, ("%s khong phai Slider/Slidebar"):format(self.Type))
     return getter()
 end
+Runtime.Breathe()
 
 ApiImpl[60] = function(self, enabled, decimalPlaces, fireCallback)
     assertObject(self, "Option")
@@ -7997,6 +8424,7 @@ ApiImpl[60] = function(self, enabled, decimalPlaces, fireCallback)
     ApiImpl[30](self, ApiImpl[29](self), fireCallback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[61] = function(self, increment, fireCallback)
     assertObject(self, "Option")
@@ -8006,6 +8434,7 @@ ApiImpl[61] = function(self, increment, fireCallback)
     ApiImpl[30](self, ApiImpl[29](self), fireCallback)
     return self
 end
+Runtime.Breathe()
 
 
 
@@ -8017,6 +8446,7 @@ ApiImpl[62] = function(self)
     assert(getter, ("%s khong ho tro Unit"):format(self.Type))
     return getter()
 end
+Runtime.Breathe()
 
 ApiImpl[63] = function(self, unit, fireCallback)
     assertObject(self, "Option")
@@ -8025,6 +8455,7 @@ ApiImpl[63] = function(self, unit, fireCallback)
     setter(unit, fireCallback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[64] = function(self, units, selected, fireCallback)
     assertObject(self, "Option")
@@ -8033,6 +8464,7 @@ ApiImpl[64] = function(self, units, selected, fireCallback)
     setter(units, selected, fireCallback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[65] = function(self, enabled)
     assertObject(self, "Option")
@@ -8041,6 +8473,7 @@ ApiImpl[65] = function(self, enabled)
     setter(enabled)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[66] = function(self, enabled)
     assertObject(self, "Option")
@@ -8049,6 +8482,7 @@ ApiImpl[66] = function(self, enabled)
     setter(enabled)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[67] = function(self, formatFn)
     assertObject(self, "Option")
@@ -8057,6 +8491,7 @@ ApiImpl[67] = function(self, formatFn)
     setter(formatFn)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[68] = function(self, callback)
     assertObject(self, "Option")
@@ -8065,6 +8500,7 @@ ApiImpl[68] = function(self, callback)
     setter(callback)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[69] = function(self, formatFn)
     assertObject(self, "Option")
@@ -8073,6 +8509,7 @@ ApiImpl[69] = function(self, formatFn)
     setter(formatFn)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[70] = function(self, parseFn)
     assertObject(self, "Option")
@@ -8081,6 +8518,7 @@ ApiImpl[70] = function(self, parseFn)
     setter(parseFn)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[71] = function(self)
     assertObject(self, "Option")
@@ -8088,6 +8526,7 @@ ApiImpl[71] = function(self)
     assert(getter, ("%s khong phai Slider/Slidebar"):format(self.Type))
     return getter()
 end
+Runtime.Breathe()
 
 ApiImpl[72] = function(self, colors)
     assertObject(self, "Option")
@@ -8096,6 +8535,7 @@ ApiImpl[72] = function(self, colors)
     setter(colors)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[73] = function(self, enabled)
     assertObject(self, "Option")
@@ -8104,6 +8544,7 @@ ApiImpl[73] = function(self, enabled)
     setter(enabled)
     return self
 end
+Runtime.Breathe()
 
 
 
@@ -8116,11 +8557,13 @@ ApiImpl[74] = function(self)
         self.Name
     )
 end
+Runtime.Breathe()
 
 ApiImpl[75] = function(self)
     assertObject(self, "Option")
     return self._quickName or self.DisplayName or self.Name
 end
+Runtime.Breathe()
 
 ApiImpl[76] = function(self, name)
     assertObject(self, "Option")
@@ -8130,22 +8573,26 @@ ApiImpl[76] = function(self, name)
     end
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[77] = function(self)
     assertObject(self, "Option")
     return self._keybindGroup
 end
+Runtime.Breathe()
 
 ApiImpl[78] = function(self, name)
     assertObject(self, "Option")
     self._keybindGroup = name ~= nil and tostring(name) or nil
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[79] = function(self)
     assertObject(self, "Option")
     return self._quickIgnored ~= true
 end
+Runtime.Breathe()
 
 ApiImpl[80] = function(self, enabled)
     assertObject(self, "Option")
@@ -8155,6 +8602,7 @@ ApiImpl[80] = function(self, enabled)
     end
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[81] = function(self)
     assertObject(self, "Option")
@@ -8163,6 +8611,7 @@ ApiImpl[81] = function(self)
     press()
     return self
 end
+Runtime.Breathe()
 
 
 
@@ -8174,6 +8623,7 @@ ApiImpl[82] = function(self)
     apply()
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[83] = function(self, text)
     assertObject(self, "Option")
@@ -8182,6 +8632,7 @@ ApiImpl[83] = function(self, text)
     setter(text)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[84] = function(self, text)
     assertObject(self, "Option")
@@ -8190,6 +8641,7 @@ ApiImpl[84] = function(self, text)
     setter(text)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[85] = function(self)
     assertObject(self, "Option")
@@ -8262,6 +8714,7 @@ ApiImpl[85] = function(self)
         task.defer(section._refreshHeight)
     end
 end
+Runtime.Breathe()
 
 
 local function bindResponsiveFixedRowHeight(section, row)
@@ -8269,6 +8722,7 @@ local function bindResponsiveFixedRowHeight(section, row)
     assert(type(callback) == "function", "Protected UI engine is not ready.")
     return callback(section, row)
 end
+Runtime.Breathe()
 
 
 local function addRowToSection(section, optionType, row, controller)
@@ -8304,6 +8758,7 @@ local function addRowToSection(section, optionType, row, controller)
     end
     return createOptionHandle(section, optionType, row, controller)
 end
+Runtime.Breathe()
 
 
 local optionFactories = {
@@ -8322,6 +8777,7 @@ local optionFactories = {
         return createLibraryToggleRow(config)
     end,
 }
+Runtime.Breathe()
 
 optionFactories[10] = (function()
     local DEFAULT_STYLE = {
@@ -9841,6 +10297,7 @@ optionFactories[10] = (function()
 
     return createLibraryParagraphRow
 end)()
+Runtime.Breathe()
 
 optionFactories[11] = (function()
     local CANVAS_STYLE = {
@@ -11197,7 +11654,9 @@ optionFactories[11] = (function()
 
     return createLibraryCanvasRow
 end)()
+Runtime.Breathe()
 local ACTION_OPTION_TYPES = { [4] = true, [5] = true }
+Runtime.Breathe()
 
 ApiImpl[86] = function(self, optionType, config)
     assertObject(self, "Section")
@@ -11387,6 +11846,7 @@ ApiImpl[86] = function(self, optionType, config)
     end
     return optionHandle
 end
+Runtime.Breathe()
 
 
 
@@ -11500,10 +11960,12 @@ ApiImpl[87] = function(self, expanded, animated)
     self._arrowTween:Play()
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[88] = function(self)
     return ApiImpl[87](self, not self.Expanded, true)
 end
+Runtime.Breathe()
 
 ApiImpl[89] = function(self)
     assertObject(self, "Section")
@@ -11543,6 +12005,7 @@ ApiImpl[89] = function(self)
         task.defer(self.Tab._updateCanvas)
     end
 end
+Runtime.Breathe()
 
 ApiImpl[90] = function(self, config)
     assertObject(self, "Tab")
@@ -11904,6 +12367,7 @@ ApiImpl[90] = function(self, config)
     task.defer(section._refreshContainer)
     return section
 end
+Runtime.Breathe()
 
 
 ApiImpl[91] = function(self)
@@ -11911,6 +12375,7 @@ ApiImpl[91] = function(self)
     ApiImpl[94](self.Window, self)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[92] = function(self)
     assertObject(self, "Tab")
@@ -11941,6 +12406,7 @@ ApiImpl[92] = function(self)
     end
     ApiImpl[93](self.Window)
 end
+Runtime.Breathe()
 
 ApiImpl[93] = function(self)
     assertObject(self, "Window")
@@ -11983,6 +12449,7 @@ ApiImpl[93] = function(self)
         end
     end
 end
+Runtime.Breathe()
 
 local function setTabSelected(tab, selected)
     tab.Page.Visible = selected
@@ -12003,6 +12470,7 @@ local function setTabSelected(tab, selected)
         ):Play()
     end
 end
+Runtime.Breathe()
 
 ApiImpl[94] = function(self, tabOrName)
     assertObject(self, "Window")
@@ -12029,6 +12497,7 @@ ApiImpl[94] = function(self, tabOrName)
     end)
     return tab
 end
+Runtime.Breathe()
 
 ApiImpl[95] = function(self, config)
     assertObject(self, "Window")
@@ -12094,17 +12563,20 @@ ApiImpl[95] = function(self, config)
     end
     return tab
 end
+Runtime.Breathe()
 
 
 ApiImpl[96] = function(self, name)
     assertObject(self, "Window")
     return self._tabByName[name]
 end
+Runtime.Breathe()
 
 ApiImpl[97] = function(self)
     assertObject(self, "Window")
     return self.DefaultTab
 end
+Runtime.Breathe()
 
 ApiImpl[98] = function(self, config)
     assertObject(self, "Window")
@@ -12121,11 +12593,13 @@ ApiImpl[98] = function(self, config)
     self._stateByName[state.Name] = state
     return state
 end
+Runtime.Breathe()
 
 ApiImpl[99] = function(self, name)
     assertObject(self, "Window")
     return self._stateByName[tostring(name)]
 end
+Runtime.Breathe()
 
 ApiImpl[100] = function(self, config)
     assertObject(self, "Window")
@@ -12167,11 +12641,13 @@ ApiImpl[100] = function(self, config)
     end
     return group
 end
+Runtime.Breathe()
 
 ApiImpl[101] = function(self, name)
     assertObject(self, "Window")
     return self._exclusiveGroupByName[tostring(name)]
 end
+Runtime.Breathe()
 
 
 
@@ -12196,6 +12672,7 @@ ApiImpl[102] = function(self)
     end)
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[103] = function(self)
     assertObject(self, "Window")
@@ -12203,6 +12680,7 @@ ApiImpl[103] = function(self)
     playCloseAnimation()
     return self
 end
+Runtime.Breathe()
 
 ApiImpl[104] = function(self)
     assertObject(self, "Window")
@@ -12211,6 +12689,7 @@ ApiImpl[104] = function(self)
     end
     return ApiImpl[102](self)
 end
+Runtime.Breathe()
 
 do
     local function paragraphMethod(index, methodName, returnsValue)
@@ -12228,23 +12707,39 @@ do
             return self
         end
     end
+    Runtime.Breathe()
 
     paragraphMethod(107, "SetTitle", false)
+    Runtime.Breathe()
     paragraphMethod(108, "GetTitle", true)
+    Runtime.Breathe()
     paragraphMethod(109, "SetStyle", false)
+    Runtime.Breathe()
     paragraphMethod(110, "GetStyle", true)
+    Runtime.Breathe()
     paragraphMethod(111, "SetHeader", false)
+    Runtime.Breathe()
     paragraphMethod(112, "SetItems", false)
+    Runtime.Breathe()
     paragraphMethod(113, "SetGroups", false)
+    Runtime.Breathe()
     paragraphMethod(114, "AppendItem", false)
+    Runtime.Breathe()
     paragraphMethod(115, "SetSearchEnabled", false)
+    Runtime.Breathe()
     paragraphMethod(116, "SetSearchQuery", false)
+    Runtime.Breathe()
     paragraphMethod(117, "GetSearchQuery", true)
+    Runtime.Breathe()
     paragraphMethod(118, "SetSpotlight", false)
+    Runtime.Breathe()
     paragraphMethod(119, "SetSelected", false)
+    Runtime.Breathe()
     paragraphMethod(120, "GetSelected", true)
+    Runtime.Breathe()
     paragraphMethod(121, "GetSurface", true)
 end
+Runtime.Breathe()
 
 do
     local surfaceNames = {
@@ -12253,6 +12748,7 @@ do
         "OnResize", "SetStyle", "GetStyle", "SetTitle", "SetSearchEnabled", "SetSearchQuery",
         "Attach", "Frame", "Text", "Button", "Image", "Model", "Bar", "Dock", "SetDock",
     }
+    Runtime.Breathe()
     for offset, methodName in ipairs(surfaceNames) do
         ApiImpl[121 + offset] = function(self, ...)
             local impl = type(self) == "table" and self._impl or nil
@@ -12267,16 +12763,19 @@ do
         end
     end
 end
+Runtime.Breathe()
 
 local ChilliLibrary = {
     NoStateChange = STATE_NO_CHANGE,
     Version = "3.22.0",
     SplitDefaultsApi = "manual-defaults-v1",
 }
+Runtime.Breathe()
 
 ChilliLibrary.Rich = {
     Bullet = utf8.char(0x2022),
 }
+Runtime.Breathe()
 
 function ChilliLibrary.Rich.Escape(text)
     return (string.gsub(tostring(text), "[<>&]", {
@@ -12285,31 +12784,38 @@ function ChilliLibrary.Rich.Escape(text)
         ["&"] = "&amp;",
     }))
 end
+Runtime.Breathe()
 
 function ChilliLibrary.Rich.Color(color, text)
     local hex = typeof(color) == "Color3" and ("#" .. color:ToHex()) or tostring(color)
     return string.format('<font color="%s">%s</font>', hex, tostring(text))
 end
+Runtime.Breathe()
 
 function ChilliLibrary.Rich.Bold(text)
     return "<b>" .. tostring(text) .. "</b>"
 end
+Runtime.Breathe()
 
 function ChilliLibrary.Rich.Italic(text)
     return "<i>" .. tostring(text) .. "</i>"
 end
+Runtime.Breathe()
 
 function ChilliLibrary.Rich.Muted(text)
     return ChilliLibrary.Rich.Color("#AAAAAA", text)
 end
+Runtime.Breathe()
 
 function ChilliLibrary.Rich.Rule(count)
     return ChilliLibrary.Rich.Color("#444455", string.rep(utf8.char(0x2500), tonumber(count) or 38))
 end
+Runtime.Breathe()
 
 function ChilliLibrary.Rich.Join(lines)
     return table.concat(lines, "\n")
 end
+Runtime.Breathe()
 
 
 ApiImpl[105] = function(self)
@@ -12378,6 +12884,7 @@ ApiImpl[105] = function(self)
         launcherGui:Destroy()
     end
 end
+Runtime.Breathe()
 
 ApiImpl[106] = function(self, config)
     assert(not self.Window, "ChilliLibrary chi quan ly 1 Window cho UI nay")
@@ -12419,6 +12926,7 @@ end
 
 (function()
 local U0 = "https://raw.githubusercontent.com/tienkhanh1/spicy/refs/heads/main/ChilliLibraryEngine"
+Runtime.Breathe()
 local B0 = {
     [1] = 0x43534833,
     [2] = Protected, [3] = Runtime,
@@ -12444,64 +12952,23 @@ local B0 = {
     [46] = ApiImpl,
     [47] = { ChilliLibrary, WindowMethods, TabMethods, SectionMethods, OptionMethods, StateMethods, ExclusiveGroupMethods, SurfaceMethods },
 }
-local V0 = "ChilliLibVersion3"
-local K0 = "Chilli Hub/EngineCache_" .. V0 .. ".lua"
-local function R0()
-    if type(isfile) ~= "function" or type(readfile) ~= "function" then
-        return nil
-    end
-    local ok, found = pcall(isfile, K0)
-    if not ok or not found then
-        return nil
-    end
-    local okRead, data = pcall(readfile, K0)
-    return okRead and type(data) == "string" and data ~= "" and data or nil
-end
-local function W0(data)
-    if type(writefile) ~= "function" then
-        return
-    end
-    pcall(function()
-        if type(isfolder) == "function" and type(makefolder) == "function" and not isfolder("Chilli Hub") then
-            makefolder("Chilli Hub")
-        end
-        writefile(K0, data)
-    end)
-end
-local function L0(source)
-    local chunk = source and loadstring(source)
-    if not chunk then
-        return nil
-    end
-    local ok, init = pcall(chunk)
-    return ok and type(init) == "function" and init or nil
-end
-local function D0()
-    local data = game:HttpGet(U0)
-    local init = L0(data)
-    assert(init, "Chilli Library engine failed to load.")
-    W0(data)
-    return init
-end
-local S0 = R0()
-local I0 = L0(S0)
-local C1 = I0 ~= nil
-if C1 then
-    task.spawn(function()
-        local ok, fresh = pcall(game.HttpGet, game, U0)
-        if ok and type(fresh) == "string" and fresh ~= "" and fresh ~= S0 and loadstring(fresh) then
-            W0(fresh)
-        end
-    end)
-else
-    I0 = D0()
-end
+Runtime.Breathe()
+local S0 = game:HttpGet(U0)
+Runtime.Breathe()
+local F0, E0 = loadstring(S0)
+Runtime.Breathe()
+assert(F0, E0)
+Runtime.Breathe()
+local O0, I0 = pcall(F0)
+Runtime.Breathe()
+assert(O0 and type(I0) == "function", tostring(I0))
+Runtime.Breathe()
 local O1, R1 = pcall(I0, B0, C0)
-if not (O1 and R1 == 0x51C71AA) and C1 then
-    I0 = D0()
-    O1, R1 = pcall(I0, B0, C0)
-end
+Runtime.Breathe()
 assert(O1 and R1 == 0x51C71AA, tostring(R1))
+Runtime.Breathe()
 end)()
+Runtime.Breathe()
+Runtime.BreatheDone = true
 return ChilliLibrary
 end
