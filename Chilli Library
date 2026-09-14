@@ -670,23 +670,19 @@ local closeButton = objects.obj14
 
 local Runtime = {}
 Runtime.BreatheLast = os.clock()
-Runtime.BreatheWaited = 0
+Runtime.BreatheCount = 0
 Runtime.BreatheDone = false
 Runtime.Breathe = function()
-    if Runtime.BreatheDone or Runtime.BreatheWaited >= 0.8 or os.clock() - Runtime.BreatheLast < 0.02 then
+    if Runtime.BreatheDone or Runtime.BreatheCount >= 100 or os.clock() - Runtime.BreatheLast < 0.05 then
         return
     end
-    local before = os.clock()
     task.wait()
-    local now = os.clock()
-    Runtime.BreatheWaited += now - before
-    Runtime.BreatheLast = now
+    Runtime.BreatheCount += 1
+    Runtime.BreatheLast = os.clock()
 end
 local Protected = {}
-Runtime.Breathe()
 
 local rootConnections = {}
-Runtime.Breathe()
 
 local function trackRootConnection(connection)
     table.insert(rootConnections, connection)
@@ -706,14 +702,11 @@ end
 Runtime.Breathe()
 
 rootGui.ResetOnSpawn = false
-Runtime.Breathe()
 
 
 
 rootGui.IgnoreGuiInset = true
-Runtime.Breathe()
 rootGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-Runtime.Breathe()
 
 
 
@@ -724,9 +717,7 @@ do
         ChilliAutoGetBarGui = true,
         ChilliFpsPingGui = true,
     }
-    Runtime.Breathe()
     local boundTargets = setmetatable({}, { __mode = "k" })
-    Runtime.Breathe()
 
     local function bindTarget(screen, target)
         if boundTargets[target] or not target:IsA("GuiObject") then
@@ -794,7 +785,6 @@ do
     Runtime.Breathe()
 
     trackRootConnection(parent.ChildAdded:Connect(bindScreen))
-    Runtime.Breathe()
     for _, child in ipairs(parent:GetChildren()) do
         bindScreen(child)
     end
@@ -818,33 +808,22 @@ end
 Runtime.Breathe()
 
 local sourceLeftCenterScreen
-Runtime.Breathe()
 local sourceLeftCenter
-Runtime.Breathe()
 local sourceButtons
-Runtime.Breathe()
 local sourceShop
-Runtime.Breathe()
 local sourceShopIcon
-Runtime.Breathe()
 local sourceShopText
-Runtime.Breathe()
 sourceLeftCenterScreen, sourceLeftCenter, sourceButtons,
     sourceShop, sourceShopIcon, sourceShopText = findLeftCenterSources()
 
 local leftCenterFrame = sourceLeftCenter
-Runtime.Breathe()
 local hudRestorePosition = leftCenterFrame
     and sourceLeftCenter.Position
     or UDim2.fromScale(0, 0.5)
 local hudTween = nil
-Runtime.Breathe()
 local hudTweenConnection = nil
-Runtime.Breathe()
 local hudAnimationSerial = 0
-Runtime.Breathe()
 Runtime.chilliIsOpen = false
-Runtime.Breathe()
 
 local function cancelHudTween()
     if hudTweenConnection then
@@ -859,21 +838,16 @@ end
 Runtime.Breathe()
 
 local launcherGui = Instance.new("ScreenGui")
-Runtime.Breathe()
 launcherGui.Name = LAUNCHER_GUI_NAME
-Runtime.Breathe()
 launcherGui.ResetOnSpawn = false
-Runtime.Breathe()
 launcherGui.IgnoreGuiInset = sourceLeftCenterScreen
     and sourceLeftCenterScreen.IgnoreGuiInset
     or false
 launcherGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-Runtime.Breathe()
 launcherGui.DisplayOrder = sourceLeftCenterScreen
     and sourceLeftCenterScreen.DisplayOrder
     or 0
 launcherGui:SetAttribute(OWNER_ATTRIBUTE, true)
-Runtime.Breathe()
 if sourceLeftCenterScreen then
     pcall(function()
         launcherGui.ScreenInsets = sourceLeftCenterScreen.ScreenInsets
@@ -883,18 +857,14 @@ if sourceLeftCenterScreen then
 end
 Runtime.Breathe()
 local gameId = game.GameId
-Runtime.Breathe()
 if gameId ~= 7709344486 then
     launcherGui.Enabled = false
 end
 Runtime.Breathe()
 launcherGui.Parent = parent
-Runtime.Breathe()
 
 local launcherRoot = Instance.new("Frame")
-Runtime.Breathe()
 launcherRoot.Name = "LeftCenter"
-Runtime.Breathe()
 launcherRoot.AnchorPoint = sourceLeftCenter
     and sourceLeftCenter.AnchorPoint
     or Vector2.new(0, 0.5)
@@ -905,29 +875,19 @@ launcherRoot.Size = sourceLeftCenter
     and sourceLeftCenter.Size
     or UDim2.fromScale(1, 1)
 launcherRoot.BackgroundTransparency = 1
-Runtime.Breathe()
 launcherRoot.BorderSizePixel = 0
-Runtime.Breathe()
 launcherRoot.Parent = launcherGui
-Runtime.Breathe()
 
 local sourceRootAspect = sourceLeftCenter
     and sourceLeftCenter:FindFirstChildOfClass("UIAspectRatioConstraint")
 local launcherRootAspect = Instance.new("UIAspectRatioConstraint")
-Runtime.Breathe()
 launcherRootAspect.AspectRatio = sourceRootAspect and sourceRootAspect.AspectRatio or 2.15
-Runtime.Breathe()
 launcherRootAspect.AspectType = sourceRootAspect and sourceRootAspect.AspectType or Enum.AspectType.FitWithinMaxSize
-Runtime.Breathe()
 launcherRootAspect.DominantAxis = sourceRootAspect and sourceRootAspect.DominantAxis or Enum.DominantAxis.Width
-Runtime.Breathe()
 launcherRootAspect.Parent = launcherRoot
-Runtime.Breathe()
 
 local launcherButtons = Instance.new("Frame")
-Runtime.Breathe()
 launcherButtons.Name = "Buttons"
-Runtime.Breathe()
 launcherButtons.AnchorPoint = sourceButtons
     and sourceButtons.AnchorPoint
     or Vector2.new(0, 0.5)
@@ -938,31 +898,20 @@ launcherButtons.Size = sourceButtons
     and sourceButtons.Size
     or UDim2.fromScale(0.062, 0.38)
 launcherButtons.BackgroundTransparency = 1
-Runtime.Breathe()
 launcherButtons.BorderSizePixel = 0
-Runtime.Breathe()
 launcherButtons.Parent = launcherRoot
-Runtime.Breathe()
 
 local sourceButtonsAspect = sourceButtons
     and sourceButtons:FindFirstChildOfClass("UIAspectRatioConstraint")
 local launcherButtonsAspect = Instance.new("UIAspectRatioConstraint")
-Runtime.Breathe()
 launcherButtonsAspect.AspectRatio = sourceButtonsAspect and sourceButtonsAspect.AspectRatio or 0.3
-Runtime.Breathe()
 launcherButtonsAspect.AspectType = sourceButtonsAspect and sourceButtonsAspect.AspectType or Enum.AspectType.FitWithinMaxSize
-Runtime.Breathe()
 launcherButtonsAspect.DominantAxis = sourceButtonsAspect and sourceButtonsAspect.DominantAxis or Enum.DominantAxis.Width
-Runtime.Breathe()
 launcherButtonsAspect.Parent = launcherButtons
-Runtime.Breathe()
 
 local chilliButton = Instance.new("ImageButton")
-Runtime.Breathe()
 chilliButton.Name = "Chilli"
-Runtime.Breathe()
 chilliButton.AnchorPoint = Vector2.new(0.5, 0.5)
-Runtime.Breathe()
 chilliButton.Position = sourceShop
     and UDim2.fromScale(0.5, 0)
     or UDim2.fromScale(0.42, -0.1885267)
@@ -976,9 +925,7 @@ chilliButton.BackgroundTransparency = sourceShop
     and sourceShop.BackgroundTransparency
     or 1
 chilliButton.BorderSizePixel = 0
-Runtime.Breathe()
 chilliButton.AutoButtonColor = sourceShop == nil or sourceShop.AutoButtonColor
-Runtime.Breathe()
 chilliButton.Image = sourceShop
     and sourceShop.Image
     or "rbxassetid://88734015663903"
@@ -986,7 +933,6 @@ chilliButton.HoverImage = sourceShop
     and sourceShop.HoverImage
     or "rbxassetid://119376130178381"
 chilliButton.PressedImage = sourceShop and sourceShop.PressedImage or ""
-Runtime.Breathe()
 chilliButton.ImageColor3 = sourceShop
     and sourceShop.ImageColor3
     or Color3.fromRGB(255, 255, 255)
@@ -1009,45 +955,31 @@ chilliButton.SliceCenter = sourceShop
     and sourceShop.SliceCenter
     or Rect.new()
 chilliButton.SliceScale = sourceShop and sourceShop.SliceScale or 1
-Runtime.Breathe()
 chilliButton.ZIndex = sourceShop and sourceShop.ZIndex or 2
-Runtime.Breathe()
 chilliButton.Parent = launcherButtons
-Runtime.Breathe()
 
 local fallbackButtonGradient = Instance.new("UIGradient")
-Runtime.Breathe()
 fallbackButtonGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(111, 145, 161)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(52, 72, 84)),
 })
 Runtime.Breathe()
 fallbackButtonGradient.Rotation = 90
-Runtime.Breathe()
 fallbackButtonGradient.Enabled = false
-Runtime.Breathe()
 fallbackButtonGradient.Parent = chilliButton
-Runtime.Breathe()
 
 local fallbackButtonStroke = Instance.new("UIStroke")
-Runtime.Breathe()
 fallbackButtonStroke.Color = Color3.fromRGB(34, 45, 52)
-Runtime.Breathe()
 fallbackButtonStroke.Thickness = 0.025
-Runtime.Breathe()
 fallbackButtonStroke.Enabled = false
-Runtime.Breathe()
 pcall(function()
     fallbackButtonStroke.StrokeSizingMode = Enum.StrokeSizingMode.ScaledSize
 end)
 Runtime.Breathe()
 fallbackButtonStroke.Parent = chilliButton
-Runtime.Breathe()
 
 local chilliViewport = Instance.new("ViewportFrame")
-Runtime.Breathe()
 chilliViewport.Name = "ChilliViewport"
-Runtime.Breathe()
 chilliViewport.AnchorPoint = sourceShopIcon and sourceShopIcon.AnchorPoint
     or Vector2.new(0.5, 0.5)
 chilliViewport.Position = sourceShopIcon and sourceShopIcon.Position
@@ -1055,68 +987,42 @@ chilliViewport.Position = sourceShopIcon and sourceShopIcon.Position
 chilliViewport.Size = sourceShopIcon and sourceShopIcon.Size
     or UDim2.fromScale(0.76055, 0.76055)
 chilliViewport.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Runtime.Breathe()
 chilliViewport.BackgroundTransparency = 1
-Runtime.Breathe()
 chilliViewport.BorderSizePixel = 0
-Runtime.Breathe()
 chilliViewport.Ambient = Color3.fromRGB(255, 255, 255)
-Runtime.Breathe()
 chilliViewport.LightColor = Color3.fromRGB(255, 255, 255)
-Runtime.Breathe()
 chilliViewport.LightDirection = Vector3.new(-1, -1, -1)
-Runtime.Breathe()
 chilliViewport.ImageColor3 = Color3.fromRGB(255, 255, 255)
-Runtime.Breathe()
 chilliViewport.ImageTransparency = 0
-Runtime.Breathe()
 chilliViewport.LayoutOrder = 0
-Runtime.Breathe()
 chilliViewport.ZIndex = sourceShopIcon and sourceShopIcon.ZIndex or 0
-Runtime.Breathe()
 chilliViewport.Visible = true
-Runtime.Breathe()
 chilliViewport.Active = false
-Runtime.Breathe()
 pcall(function()
     chilliViewport.Interactable = false
 end)
 Runtime.Breathe()
 chilliViewport.Parent = chilliButton
-Runtime.Breathe()
 
 local chilliWorldModel = Instance.new("WorldModel")
-Runtime.Breathe()
 chilliWorldModel.Name = "WorldModel"
-Runtime.Breathe()
 chilliWorldModel.Parent = chilliViewport
-Runtime.Breathe()
 
 local chilliSpider = createEmbeddedSpider()
-Runtime.Breathe()
 chilliSpider.Parent = chilliWorldModel
-Runtime.Breathe()
 chilliSpider.CFrame = CFrame.Angles(
     math.rad(82.5),
     math.rad(-153.95),
     math.rad(0)
 )
-Runtime.Breathe()
 
 local chilliViewportCamera = Instance.new("Camera")
-Runtime.Breathe()
 chilliViewportCamera.Name = "Camera"
-Runtime.Breathe()
 chilliViewportCamera.CameraType = Enum.CameraType.Fixed
-Runtime.Breathe()
 chilliViewportCamera.FieldOfView = 50
-Runtime.Breathe()
 chilliViewportCamera.FieldOfViewMode = Enum.FieldOfViewMode.Vertical
-Runtime.Breathe()
 chilliViewportCamera.Parent = chilliViewport
-Runtime.Breathe()
 chilliViewport.CurrentCamera = chilliViewportCamera
-Runtime.Breathe()
 
 local function frameChilliSpider()
     local boxCFrame = chilliSpider.CFrame
@@ -1161,7 +1067,6 @@ end
 Runtime.Breathe()
 
 frameChilliSpider()
-Runtime.Breathe()
 task.defer(function()
     RunService.RenderStepped:Wait()
     frameChilliSpider()
@@ -1169,57 +1074,33 @@ end)
 Runtime.Breathe()
 
 local chilliText = Instance.new("TextLabel")
-Runtime.Breathe()
 chilliText.Name = "Txt"
-Runtime.Breathe()
 chilliText.AnchorPoint = sourceShopText and sourceShopText.AnchorPoint or Vector2.new(0.5, 0.5)
-Runtime.Breathe()
 chilliText.Position = sourceShopText and sourceShopText.Position or UDim2.fromScale(0.5, 0.9367089)
-Runtime.Breathe()
 chilliText.Size = sourceShopText and sourceShopText.Size or UDim2.fromScale(1, 0.2278481)
-Runtime.Breathe()
 chilliText.BackgroundTransparency = 1
-Runtime.Breathe()
 chilliText.BorderSizePixel = 0
-Runtime.Breathe()
 chilliText.FontFace = sourceShopText and sourceShopText.FontFace or Font.new(
     "rbxasset://fonts/families/GothamSSm.json",
     Enum.FontWeight.ExtraBold
 )
-Runtime.Breathe()
 chilliText.Text = "Chilli Hub"
-Runtime.Breathe()
 chilliText.TextColor3 = sourceShopText and sourceShopText.TextColor3 or Color3.fromRGB(255, 255, 255)
-Runtime.Breathe()
 chilliText.TextTransparency = sourceShopText and sourceShopText.TextTransparency or 0
-Runtime.Breathe()
 chilliText.TextScaled = sourceShopText == nil or sourceShopText.TextScaled
-Runtime.Breathe()
 chilliText.TextWrapped = sourceShopText == nil or sourceShopText.TextWrapped
-Runtime.Breathe()
 chilliText.TextXAlignment = sourceShopText and sourceShopText.TextXAlignment or Enum.TextXAlignment.Center
-Runtime.Breathe()
 chilliText.TextYAlignment = sourceShopText and sourceShopText.TextYAlignment or Enum.TextYAlignment.Center
-Runtime.Breathe()
 chilliText.ZIndex = sourceShopText and sourceShopText.ZIndex or 1
-Runtime.Breathe()
 chilliText.Parent = chilliButton
-Runtime.Breathe()
 
 local sourceTextStroke = sourceShopText and sourceShopText:FindFirstChildOfClass("UIStroke")
-Runtime.Breathe()
 local chilliTextStroke = Instance.new("UIStroke")
-Runtime.Breathe()
 chilliTextStroke.ApplyStrokeMode = sourceTextStroke and sourceTextStroke.ApplyStrokeMode or Enum.ApplyStrokeMode.Contextual
-Runtime.Breathe()
 chilliTextStroke.Color = sourceTextStroke and sourceTextStroke.Color or Color3.fromRGB(0, 0, 0)
-Runtime.Breathe()
 chilliTextStroke.LineJoinMode = sourceTextStroke and sourceTextStroke.LineJoinMode or Enum.LineJoinMode.Round
-Runtime.Breathe()
 chilliTextStroke.Thickness = sourceTextStroke and sourceTextStroke.Thickness or 2
-Runtime.Breathe()
 chilliTextStroke.Transparency = sourceTextStroke and sourceTextStroke.Transparency or 0.35
-Runtime.Breathe()
 if sourceTextStroke then
     local originalThickness = sourceTextStroke:GetAttribute("OriginalThickness")
     if originalThickness ~= nil then
@@ -1228,7 +1109,6 @@ if sourceTextStroke then
 end
 Runtime.Breathe()
 chilliTextStroke.Parent = chilliText
-Runtime.Breathe()
 
 local function getLiveVerticalStep()
     if not (sourceButtons and sourceButtons.Parent and sourceShop and sourceShop.Parent) then
@@ -1298,7 +1178,6 @@ end
 Runtime.Breathe()
 
 local launcherLayoutQueued = false
-Runtime.Breathe()
 local function queueChilliLauncherLayout()
     
     
@@ -1317,9 +1196,7 @@ end
 Runtime.Breathe()
 
 local sourceConnections = {}
-Runtime.Breathe()
 local sourceBound = false
-Runtime.Breathe()
 
 local function disconnectSourceConnections()
     for _, connection in ipairs(sourceConnections) do
@@ -1639,13 +1516,11 @@ trackRootConnection(playerGui.DescendantAdded:Connect(function()
         adoptLeftCenterSources(screen, frame, buttons, shop, icon, text)
     end
 end))
-Runtime.Breathe()
 
 
 
 
 local HUD_RENDER_GUARD_NAME = "ChilliLibraryLeftCenterRenderGuard"
-Runtime.Breathe()
 
 local function enforceHiddenLeftCenterBeforeRender()
     if not rootGui.Parent
@@ -1712,7 +1587,6 @@ RunService:BindToRenderStep(
     Enum.RenderPriority.Last.Value + 10000,
     enforceHiddenLeftCenterBeforeRender
 )
-Runtime.Breathe()
 
 rootGui.Destroying:Connect(function()
     pcall(function()
@@ -1880,9 +1754,7 @@ Runtime.Breathe()
 
 
 local SAFE_TOUCH_TAP_DISTANCE = 10
-Runtime.Breathe()
 local safeTouchPresses = setmetatable({}, { __mode = "k" })
-Runtime.Breathe()
 
 local function pointInsideGui(guiObject, point)
     if not guiObject or not guiObject.Parent or not guiObject.Visible then
@@ -1908,7 +1780,6 @@ trackRootConnection(UserInputService.InputChanged:Connect(function(input)
         press.Cancelled = true
     end
 end))
-Runtime.Breathe()
 
 trackRootConnection(UserInputService.InputEnded:Connect(function(input)
     local press = safeTouchPresses[input]
@@ -1931,7 +1802,6 @@ trackRootConnection(UserInputService.InputEnded:Connect(function(input)
         end
     end)
 end))
-Runtime.Breathe()
 
 local function connectSafeActivation(button, callback)
     button.Active = true
@@ -2017,13 +1887,9 @@ end
 Runtime.Breathe()
 
 Runtime.menuSize = rootGui:GetAttribute("MenuSize") or mainFrame.Size
-Runtime.Breathe()
 local defaultOpenPosition = UDim2.fromScale(0.5, 0.475)
-Runtime.Breathe()
 Runtime.windowRestPosition = defaultOpenPosition
-Runtime.Breathe()
 Runtime.windowDragController = nil
-Runtime.Breathe()
 local function offsetWindowPosition(position, yScale)
     return UDim2.new(
         position.X.Scale,
@@ -2047,21 +1913,14 @@ local function closedWindowPosition()
 end
 Runtime.Breathe()
 local WINDOW_OPEN_DURATION = 0.34
-Runtime.Breathe()
 local WINDOW_CLOSE_DURATION = 0.26
-Runtime.Breathe()
 local animationLocked = false
-Runtime.Breathe()
 local windowTween = nil
-Runtime.Breathe()
 local windowTweenConnection = nil
-Runtime.Breathe()
 local windowAnimationSerial = 0
-Runtime.Breathe()
 
 
 Runtime.windowAnimating = false
-Runtime.Breathe()
 
 
 
@@ -2089,7 +1948,6 @@ local ContentScale = {
     X = 1,
     Y = 1,
 }
-Runtime.Breathe()
 
 
 function ContentScale.OnChanged(callback)
@@ -2147,27 +2005,22 @@ Runtime.Breathe()
 
 do
     local aspectConstraint = objects.obj24
-    Runtime.Breathe()
     local ratio = aspectConstraint.AspectRatio
-    Runtime.Breathe()
     
     
     
     
     aspectConstraint.Parent = nil
-    Runtime.Breathe()
 
     
     
     local viewport = camera and camera.ViewportSize or Vector2.new(1280, 720)
-    Runtime.Breathe()
     if viewport.X < 1 or viewport.Y < 1 then
         viewport = Vector2.new(1280, 720)
     end
     Runtime.Breathe()
 
     local topLeftInset, bottomRightInset = Vector2.new(0, 0), Vector2.new(0, 0)
-    Runtime.Breathe()
     pcall(function()
         topLeftInset, bottomRightInset = GuiService:GetGuiInset()
     end)
@@ -2177,17 +2030,13 @@ do
         viewport.X - topLeftInset.X - bottomRightInset.X,
         1
     )
-    Runtime.Breathe()
     local regionY = math.max(
         viewport.Y - topLeftInset.Y - bottomRightInset.Y,
         1
     )
-    Runtime.Breathe()
 
     local width = Runtime.menuSize.X.Scale * regionX
-    Runtime.Breathe()
     local height = Runtime.menuSize.Y.Scale * regionY
-    Runtime.Breathe()
     if ratio > 0 then
         if width / height > ratio then
             width = height * ratio
@@ -2215,11 +2064,8 @@ do
     Runtime.Breathe()
 
     Runtime.menuSize = UDim2.fromScale(width / regionX, height / regionY)
-    Runtime.Breathe()
     rootGui:SetAttribute("MenuSize", Runtime.menuSize)
-    Runtime.Breathe()
     mainFrame.Size = Runtime.menuSize
-    Runtime.Breathe()
     ContentScale.Base = Runtime.menuSize
 end
 Runtime.Breathe()
@@ -2490,56 +2336,35 @@ local RESIZE_LIMITS = {
     MinHeight = 0.22,
     MaxHeight = 0.98,
 }
-Runtime.Breathe()
 
 
 
 
 
 local RESIZE_KEEPS_OPTION_WIDTH = false
-Runtime.Breathe()
 
 local resizeGrip = Instance.new("TextButton")
-Runtime.Breathe()
 resizeGrip.Name = "ResizeGrip"
-Runtime.Breathe()
 resizeGrip.Active = true
-Runtime.Breathe()
 resizeGrip.AutoButtonColor = false
-Runtime.Breathe()
 resizeGrip.AnchorPoint = Vector2.new(1, 1)
-Runtime.Breathe()
 resizeGrip.BackgroundTransparency = 1
-Runtime.Breathe()
 resizeGrip.BorderSizePixel = 0
-Runtime.Breathe()
 resizeGrip.Position = UDim2.fromScale(0.998, 0.995)
-Runtime.Breathe()
 resizeGrip.Selectable = false
-Runtime.Breathe()
 resizeGrip.Size = UDim2.fromScale(0.05, 0.05)
-Runtime.Breathe()
 resizeGrip.Text = ""
-Runtime.Breathe()
 resizeGrip.ZIndex = 120
-Runtime.Breathe()
 resizeGrip.Parent = mainFrame
-Runtime.Breathe()
 
 local resizeGripAspect = Instance.new("UIAspectRatioConstraint")
-Runtime.Breathe()
 resizeGripAspect.AspectRatio = 1
-Runtime.Breathe()
 resizeGripAspect.AspectType = Enum.AspectType.FitWithinMaxSize
-Runtime.Breathe()
 resizeGripAspect.DominantAxis = Enum.DominantAxis.Width
-Runtime.Breathe()
 resizeGripAspect.Parent = resizeGrip
-Runtime.Breathe()
 
 
 local resizeGripBars = {}
-Runtime.Breathe()
 for _, bar in ipairs({
     { 0.5, 0.5, 0.9 },
     { 0.68, 0.68, 0.54 },
@@ -2571,13 +2396,9 @@ end
 Runtime.Breathe()
 
 local resizeDragging = false
-Runtime.Breathe()
 local resizeActiveTouch = nil
-Runtime.Breathe()
 local resizeStartPointer = Vector2.new(0, 0)
-Runtime.Breathe()
 local resizeStartSize = Vector2.new(0, 0)
-Runtime.Breathe()
 
 local function applyResizeSize(widthPixels, heightPixels)
     local region = rootGui.AbsoluteSize
@@ -2664,7 +2485,6 @@ trackRootConnection(UserInputService.InputChanged:Connect(function(input)
         resizeFromInputPosition(input.Position)
     end
 end))
-Runtime.Breathe()
 
 trackRootConnection(UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -2677,7 +2497,6 @@ trackRootConnection(UserInputService.InputEnded:Connect(function(input)
         end
     end
 end))
-Runtime.Breathe()
 
 
 ContentScale.OnChanged(function(scaleX, scaleY)
@@ -2737,14 +2556,12 @@ local normalTextFont = Font.new(
     Enum.FontWeight.ExtraBold,
     Enum.FontStyle.Normal
 )
-Runtime.Breathe()
 
 local italicTextFont = Font.new(
     "rbxasset://fonts/families/GothamSSm.json",
     Enum.FontWeight.ExtraBold,
     Enum.FontStyle.Italic
 )
-Runtime.Breathe()
 
 local shinyTextGradient = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
@@ -2989,28 +2806,18 @@ end
 Runtime.Breathe()
 
 local sideButtons = Instance.new("Frame")
-Runtime.Breathe()
 sideButtons.Name = "SideButtons"
-Runtime.Breathe()
 sideButtons.Active = false
-Runtime.Breathe()
 sideButtons.AnchorPoint = Vector2.new(1, 0.5)
-Runtime.Breathe()
 sideButtons.BackgroundTransparency = 1
-Runtime.Breathe()
 sideButtons.BorderSizePixel = 0
-Runtime.Breathe()
 
 
 
 sideButtons.Position = UDim2.new(-0.025, 0, 0.558, 0)
-Runtime.Breathe()
 sideButtons.Size = UDim2.new(0.2612044513, 0, 1, 0)
-Runtime.Breathe()
 sideButtons.ZIndex = 99
-Runtime.Breathe()
 sideButtons.Parent = mainFrame
-Runtime.Breathe()
 
 
 
@@ -3033,9 +2840,7 @@ Runtime.Breathe()
 
 
 local ROW_ASPECT = 10
-Runtime.Breathe()
 local ROW_WIDTH_SCALE = 0.97
-Runtime.Breathe()
 
 
 
@@ -3047,48 +2852,39 @@ local CONTROL_LAYOUT = {
     WideWidth = 0.28,
     WideCenterX = 0.845,
 }
-Runtime.Breathe()
 
 
 
 local CHEVRON_COLOR = Color3.fromRGB(58, 255, 55)
-Runtime.Breathe()
 
 
 local UNIT_CHEVRON_COLOR = Color3.fromRGB(255, 255, 255)
-Runtime.Breathe()
 
 
 local MAX_CHIPS_PER_LINE = 4
-Runtime.Breathe()
 
 
 
 
 local BALANCE_CHIP_LINES = false
-Runtime.Breathe()
 
 
 
 local ACCENT_WIDTH_RATIO = 0.17
-Runtime.Breathe()
 
 
 
 local SEARCH_MIN_OPTIONS = 5
-Runtime.Breathe()
 
 
 
 
 local ROW_ASPECT_WITH_NOTE = 7.5
-Runtime.Breathe()
 
 
 
 
 local NOTE_TITLE_SCALE = 0.9
-Runtime.Breathe()
 
 local function addAccentGradient(parent)
     local gradient = Instance.new("UIGradient")
@@ -3207,7 +3003,6 @@ Runtime.Breathe()
 
 
 Runtime.activeDropdownCloser = nil
-Runtime.Breathe()
 
 local function closeActiveDropdown()
     if Runtime.activeDropdownCloser then
@@ -6075,13 +5870,9 @@ Runtime.Breathe()
 
 
 local NOTE_LEFT = 0.025
-Runtime.Breathe()
 local NOTE_GAP = 0.02
-Runtime.Breathe()
 local NOTE_MAX_WIDTH = 0.94
-Runtime.Breathe()
 local NOTE_MIN_WIDTH = 0.3
-Runtime.Breathe()
 
 local function noteWidthFor(control)
     if not control then
@@ -6598,38 +6389,25 @@ local TAB_LAYOUT = {
     NormalHeight = 0.130,
     GapRatio = 0.023 / 0.130,
 }
-Runtime.Breathe()
 local SECTION_ARROW = {
     Scale = 0.65,
     Spacing = 0.15,
     Arm = 0.22,
 }
-Runtime.Breathe()
 local SECTION_HEADER_ASPECT = 16
-Runtime.Breathe()
 
 local sideButtonLayout = Instance.new("UIListLayout")
-Runtime.Breathe()
 sideButtonLayout.FillDirection = Enum.FillDirection.Vertical
-Runtime.Breathe()
 sideButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-Runtime.Breathe()
 
 sideButtonLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-Runtime.Breathe()
 sideButtonLayout.SortOrder = Enum.SortOrder.LayoutOrder
-Runtime.Breathe()
 sideButtonLayout.Parent = sideButtons
-Runtime.Breathe()
 
 local sideButtonPadding = Instance.new("UIPadding")
-Runtime.Breathe()
 sideButtonPadding.Name = "TabPadding"
-Runtime.Breathe()
 sideButtonPadding.PaddingTop = UDim.new(0.067, 0)
-Runtime.Breathe()
 sideButtonPadding.Parent = sideButtons
-Runtime.Breathe()
 
 
 
@@ -6637,7 +6415,6 @@ Runtime.Breathe()
 
 
 local TabColumns = {}
-Runtime.Breathe()
 do
     local function buildColumn(name, anchorX, edgeX)
         local frame = Instance.new("Frame")
@@ -6685,13 +6462,9 @@ do
         Width = 0.2612044513,
         GapRatio = TAB_LAYOUT.GapRatio,
     }
-    Runtime.Breathe()
     TabColumns.Right = buildColumn("SideButtonsRight", 0, 1.025)
-    Runtime.Breathe()
     TabColumns.Right.CenterY = 0.558
-    Runtime.Breathe()
     TabColumns.Right.TopPadding = 0.067
-    Runtime.Breathe()
     TabColumns.Right.Width = 0.2612044513
 end
 Runtime.Breathe()
@@ -6906,53 +6679,32 @@ Runtime.Breathe()
 
 
 local WindowMethods = {}
-Runtime.Breathe()
 local TabMethods = {}
-Runtime.Breathe()
 local SectionMethods = {}
-Runtime.Breathe()
 local OptionMethods = {}
-Runtime.Breathe()
 local StateMethods = {}
-Runtime.Breathe()
 local ExclusiveGroupMethods = {}
-Runtime.Breathe()
 local SurfaceMethods = {}
-Runtime.Breathe()
 local ApiImpl = {}
-Runtime.Breathe()
 Runtime.optionChangedHook = nil
-Runtime.Breathe()
 Runtime.stateChangedHook = nil
-Runtime.Breathe()
 
 
 Runtime.configLoadedHook = nil
-Runtime.Breathe()
 
 
 Runtime.quickRefreshHook = nil
-Runtime.Breathe()
 
 WindowMethods.__index = WindowMethods
-Runtime.Breathe()
 TabMethods.__index = TabMethods
-Runtime.Breathe()
 SectionMethods.__index = SectionMethods
-Runtime.Breathe()
 OptionMethods.__index = OptionMethods
-Runtime.Breathe()
 StateMethods.__index = StateMethods
-Runtime.Breathe()
 ExclusiveGroupMethods.__index = ExclusiveGroupMethods
-Runtime.Breathe()
 SurfaceMethods.__index = SurfaceMethods
-Runtime.Breathe()
 
 local STATE_NO_CHANGE = {}
-Runtime.Breathe()
 local MAX_STATE_TRANSACTION_STEPS = 256
-Runtime.Breathe()
 
 local function assertObject(object, expectedKind)
     assert(
@@ -8777,7 +8529,6 @@ local optionFactories = {
         return createLibraryToggleRow(config)
     end,
 }
-Runtime.Breathe()
 
 optionFactories[10] = (function()
     local DEFAULT_STYLE = {
@@ -10297,7 +10048,6 @@ optionFactories[10] = (function()
 
     return createLibraryParagraphRow
 end)()
-Runtime.Breathe()
 
 optionFactories[11] = (function()
     local CANVAS_STYLE = {
@@ -11654,9 +11404,7 @@ optionFactories[11] = (function()
 
     return createLibraryCanvasRow
 end)()
-Runtime.Breathe()
 local ACTION_OPTION_TYPES = { [4] = true, [5] = true }
-Runtime.Breathe()
 
 ApiImpl[86] = function(self, optionType, config)
     assertObject(self, "Section")
@@ -12710,33 +12458,19 @@ do
     Runtime.Breathe()
 
     paragraphMethod(107, "SetTitle", false)
-    Runtime.Breathe()
     paragraphMethod(108, "GetTitle", true)
-    Runtime.Breathe()
     paragraphMethod(109, "SetStyle", false)
-    Runtime.Breathe()
     paragraphMethod(110, "GetStyle", true)
-    Runtime.Breathe()
     paragraphMethod(111, "SetHeader", false)
-    Runtime.Breathe()
     paragraphMethod(112, "SetItems", false)
-    Runtime.Breathe()
     paragraphMethod(113, "SetGroups", false)
-    Runtime.Breathe()
     paragraphMethod(114, "AppendItem", false)
-    Runtime.Breathe()
     paragraphMethod(115, "SetSearchEnabled", false)
-    Runtime.Breathe()
     paragraphMethod(116, "SetSearchQuery", false)
-    Runtime.Breathe()
     paragraphMethod(117, "GetSearchQuery", true)
-    Runtime.Breathe()
     paragraphMethod(118, "SetSpotlight", false)
-    Runtime.Breathe()
     paragraphMethod(119, "SetSelected", false)
-    Runtime.Breathe()
     paragraphMethod(120, "GetSelected", true)
-    Runtime.Breathe()
     paragraphMethod(121, "GetSurface", true)
 end
 Runtime.Breathe()
@@ -12748,7 +12482,6 @@ do
         "OnResize", "SetStyle", "GetStyle", "SetTitle", "SetSearchEnabled", "SetSearchQuery",
         "Attach", "Frame", "Text", "Button", "Image", "Model", "Bar", "Dock", "SetDock",
     }
-    Runtime.Breathe()
     for offset, methodName in ipairs(surfaceNames) do
         ApiImpl[121 + offset] = function(self, ...)
             local impl = type(self) == "table" and self._impl or nil
@@ -12770,12 +12503,10 @@ local ChilliLibrary = {
     Version = "3.22.0",
     SplitDefaultsApi = "manual-defaults-v1",
 }
-Runtime.Breathe()
 
 ChilliLibrary.Rich = {
     Bullet = utf8.char(0x2022),
 }
-Runtime.Breathe()
 
 function ChilliLibrary.Rich.Escape(text)
     return (string.gsub(tostring(text), "[<>&]", {
@@ -12926,7 +12657,6 @@ end
 
 (function()
 local U0 = "https://raw.githubusercontent.com/tienkhanh1/spicy/refs/heads/main/ChilliLibraryEngine"
-Runtime.Breathe()
 local B0 = {
     [1] = 0x43534833,
     [2] = Protected, [3] = Runtime,
@@ -12952,23 +12682,14 @@ local B0 = {
     [46] = ApiImpl,
     [47] = { ChilliLibrary, WindowMethods, TabMethods, SectionMethods, OptionMethods, StateMethods, ExclusiveGroupMethods, SurfaceMethods },
 }
-Runtime.Breathe()
 local S0 = game:HttpGet(U0)
-Runtime.Breathe()
 local F0, E0 = loadstring(S0)
-Runtime.Breathe()
 assert(F0, E0)
-Runtime.Breathe()
 local O0, I0 = pcall(F0)
-Runtime.Breathe()
 assert(O0 and type(I0) == "function", tostring(I0))
-Runtime.Breathe()
 local O1, R1 = pcall(I0, B0, C0)
-Runtime.Breathe()
 assert(O1 and R1 == 0x51C71AA, tostring(R1))
-Runtime.Breathe()
 end)()
-Runtime.Breathe()
 Runtime.BreatheDone = true
 return ChilliLibrary
 end
