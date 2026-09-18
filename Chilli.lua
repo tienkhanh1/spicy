@@ -1,13 +1,19 @@
 local SAE = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/StealAnEgg"
+local RAP = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/RideAPet"
+local JFA = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/JumpForAnimals"
 local SAB = "https://raw.githubusercontent.com/tienkhanh1/spicy/refs/heads/main/Steal-a-Brainrot"
 
 local byGameId = {
     [10563114921] = SAE,
+    [10035204815] = RAP,
+    [10690360998] = JFA,
     [7709344486] = SAB,
 }
 
 local byPlaceId = {
     [107778070777162] = SAE,
+    [124216119978534] = RAP,
+    [126870639873289] = JFA,
     [109983668079237] = SAB,
 }
 
