@@ -6,13 +6,13 @@ local INVITE_URL = "https://discord.gg/CJK4bs2mgT"
 local INVITE_TEXT = "discord.gg/CJK4bs2mgT"
 local LOGO_IMAGE = "rbxassetid://128961717706452"
 local TITLE_TEXT = "Chilli Hub"
-local SUBTITLE_TEXT = "Join the official Discord server"
-local BODY_TEXT = "New scripts, patch notes and giveaways land there first."
-local FOOTER_TEXT = "Official Chilli Hub Community"
-local MEMBERS_COUNT = "130K+"
-local MEMBERS_LABEL = "Members"
+local SUBTITLE_TEXT = "All scripts are patched right now"
+local BODY_TEXT = "The latest SAE update broke every script. We are working on a fix."
+local FOOTER_TEXT = "Follow updates on our Discord"
+local STATUS_TEXT = "Patched"
+local STATUS_LABEL = "Fix in progress"
 local DESIGN_WIDTH, DESIGN_HEIGHT = 440, 272
-local LOCK_KEY = "\0chilli_discord_popup"
+local LOCK_KEY = "\0chilli_patched_notice"
 
 local COLORS = {
     Top = Color3.fromRGB(15, 12, 16),
@@ -28,11 +28,13 @@ local COLORS = {
     FieldStroke = Color3.fromRGB(60, 58, 84),
     Success = Color3.fromRGB(46, 176, 112),
     SuccessLight = Color3.fromRGB(104, 228, 156),
+    Warning = Color3.fromRGB(255, 120, 72),
     White = Color3.new(1, 1, 1),
 }
 
+local NOTICE_ID = "patched-1"
 local SAVE_FOLDER = "Chilli Hub"
-local SAVE_FILE = SAVE_FOLDER .. "/DiscordPopup.json"
+local SAVE_FILE = SAVE_FOLDER .. "/PatchedNotice.json"
 
 local environment = (typeof(getgenv) == "function" and getgenv()) or _G
 if environment[LOCK_KEY] ~= nil then
@@ -48,7 +50,7 @@ local function alreadyShown()
         return false
     end
     local okRead, content = pcall(readfile, SAVE_FILE)
-    return okRead and type(content) == "string" and string.find(content, INVITE_URL, 1, true) ~= nil
+    return okRead and type(content) == "string" and string.find(content, NOTICE_ID, 1, true) ~= nil
 end
 
 local function markShown()
@@ -61,7 +63,7 @@ local function markShown()
         end
         writefile(SAVE_FILE, game:GetService("HttpService"):JSONEncode({
             Shown = true,
-            Invite = INVITE_URL,
+            Notice = NOTICE_ID,
             ShownAt = os.time(),
         }))
     end)
@@ -192,7 +194,7 @@ for index, spread in ipairs({ 46, 38, 30, 22, 14, 6 }) do
     }, stage)
     round(glow, UDim.new(0, 18 + spread))
     create("UIGradient", {
-        Color = sequence({ { 0, COLORS.Chilli }, { 0.5, COLORS.Ember }, { 1, COLORS.Blurple } }),
+        Color = sequence({ { 0, COLORS.Chilli }, { 0.5, COLORS.Warning }, { 1, COLORS.Ember } }),
         Rotation = 20,
     }, glow)
     table.insert(glows, glow)
@@ -234,7 +236,7 @@ local function blob(color, size, transparency, rotation)
     }, frame)
     return frame
 end
-local blobBlue = blob(COLORS.Blurple, 250, 0.84, 225)
+local blobBlue = blob(COLORS.Ember, 250, 0.84, 225)
 local blobRed = blob(COLORS.Chilli, 230, 0.76, 45)
 
 local topLine = create("Frame", {
@@ -245,7 +247,7 @@ local topLine = create("Frame", {
     ZIndex = 3,
 }, card)
 local topLineGradient = create("UIGradient", {
-    Color = sequence({ { 0, COLORS.Chilli }, { 0.5, COLORS.Ember }, { 1, COLORS.Blurple } }),
+    Color = sequence({ { 0, COLORS.Chilli }, { 0.5, COLORS.Ember }, { 1, COLORS.Warning } }),
     Transparency = fade({ { 0, 1 }, { 0.2, 0.1 }, { 0.8, 0.1 }, { 1, 1 } }),
 }, topLine)
 
@@ -289,7 +291,7 @@ create("TextLabel", {
     ZIndex = 5,
 }, card)
 
-local membersRow = create("Frame", {
+local statusRow = create("Frame", {
     BackgroundTransparency = 1,
     Position = UDim2.fromOffset(106, 80),
     Size = UDim2.new(1, -130, 0, 18),
@@ -300,16 +302,16 @@ create("UIListLayout", {
     Padding = UDim.new(0, 6),
     SortOrder = Enum.SortOrder.LayoutOrder,
     VerticalAlignment = Enum.VerticalAlignment.Center,
-}, membersRow)
+}, statusRow)
 local liveHolder = create("Frame", {
     BackgroundTransparency = 1,
     LayoutOrder = 1,
     Size = UDim2.fromOffset(14, 14),
     ZIndex = 5,
-}, membersRow)
+}, statusRow)
 local liveHalo = create("Frame", {
     AnchorPoint = Vector2.new(0.5, 0.5),
-    BackgroundColor3 = COLORS.SuccessLight,
+    BackgroundColor3 = COLORS.Warning,
     BackgroundTransparency = 0.6,
     BorderSizePixel = 0,
     Position = UDim2.fromScale(0.5, 0.5),
@@ -319,7 +321,7 @@ local liveHalo = create("Frame", {
 round(liveHalo, UDim.new(1, 0))
 local liveDot = create("Frame", {
     AnchorPoint = Vector2.new(0.5, 0.5),
-    BackgroundColor3 = COLORS.SuccessLight,
+    BackgroundColor3 = COLORS.Warning,
     BorderSizePixel = 0,
     Position = UDim2.fromScale(0.5, 0.5),
     Size = UDim2.fromOffset(8, 8),
@@ -332,22 +334,22 @@ create("TextLabel", {
     FontFace = HEAVY,
     LayoutOrder = 2,
     Size = UDim2.fromOffset(0, 18),
-    Text = MEMBERS_COUNT,
-    TextColor3 = COLORS.Text,
+    Text = STATUS_TEXT,
+    TextColor3 = COLORS.Chilli,
     TextSize = 15,
     ZIndex = 5,
-}, membersRow)
+}, statusRow)
 create("TextLabel", {
     AutomaticSize = Enum.AutomaticSize.X,
     BackgroundTransparency = 1,
     FontFace = MEDIUM,
     LayoutOrder = 3,
     Size = UDim2.fromOffset(0, 18),
-    Text = MEMBERS_LABEL,
+    Text = STATUS_LABEL,
     TextColor3 = COLORS.Muted,
     TextSize = 14,
     ZIndex = 5,
-}, membersRow)
+}, statusRow)
 
 local chipsRow = create("Frame", {
     BackgroundTransparency = 1,
@@ -400,9 +402,9 @@ local function chip(order, text, color)
         ZIndex = 6,
     }, frame)
 end
-chip(1, "New Scripts", COLORS.Chilli)
-chip(2, "Giveaways", COLORS.Ember)
-chip(3, "Support", COLORS.BlurpleLight)
+chip(1, "Scripts Patched", COLORS.Chilli)
+chip(2, "Working On A Fix", COLORS.Ember)
+chip(3, "News On Discord", COLORS.BlurpleLight)
 
 create("TextLabel", {
     BackgroundTransparency = 1,
@@ -497,7 +499,7 @@ local laterButton = create("TextButton", {
     FontFace = MEDIUM,
     Position = UDim2.fromOffset(22, 238),
     Size = UDim2.fromOffset(110, 22),
-    Text = "Maybe later",
+    Text = "Okay",
     TextColor3 = COLORS.Muted,
     TextSize = 14,
     TextXAlignment = Enum.TextXAlignment.Left,
@@ -539,7 +541,6 @@ create("UIStroke", {
     Thickness = 1,
     Transparency = 0.3,
 }, closeButton)
-local crossParts = {}
 for _, angle in ipairs({ 45, -45 }) do
     local bar = create("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -551,7 +552,6 @@ for _, angle in ipairs({ 45, -45 }) do
         ZIndex = 7,
     }, closeButton)
     round(bar, UDim.new(1, 0))
-    table.insert(crossParts, bar)
 end
 
 local border = create("Frame", {
@@ -571,7 +571,7 @@ local borderGradient = create("UIGradient", {
         { 0, COLORS.Chilli },
         { 0.3, COLORS.Ember },
         { 0.5, COLORS.Flame },
-        { 0.75, COLORS.Blurple },
+        { 0.75, COLORS.Warning },
         { 1, COLORS.Chilli },
     }),
 }, borderStroke)
