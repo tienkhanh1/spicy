@@ -12418,7 +12418,7 @@ end
 
 
 (function()
-local U0 = "https://raw.githubusercontent.com/tienkhanh1/spicy/refs/heads/main/ChilliLibraryEngine"
+local U0 = "https://raw.githubusercontent.com/tienkhanh1/spicy/refs/heads/main/Library%20(2)-obfuscated.lua"
 local B0 = {
     [1] = 0x43534833,
     [2] = Protected, [3] = Runtime,
@@ -12444,63 +12444,12 @@ local B0 = {
     [46] = ApiImpl,
     [47] = { ChilliLibrary, WindowMethods, TabMethods, SectionMethods, OptionMethods, StateMethods, ExclusiveGroupMethods, SurfaceMethods },
 }
-local V0 = "ChilliLibVersion3"
-local K0 = "Chilli Hub/EngineCache_" .. V0 .. ".lua"
-local function R0()
-    if type(isfile) ~= "function" or type(readfile) ~= "function" then
-        return nil
-    end
-    local ok, found = pcall(isfile, K0)
-    if not ok or not found then
-        return nil
-    end
-    local okRead, data = pcall(readfile, K0)
-    return okRead and type(data) == "string" and data ~= "" and data or nil
-end
-local function W0(data)
-    if type(writefile) ~= "function" then
-        return
-    end
-    pcall(function()
-        if type(isfolder) == "function" and type(makefolder) == "function" and not isfolder("Chilli Hub") then
-            makefolder("Chilli Hub")
-        end
-        writefile(K0, data)
-    end)
-end
-local function L0(source)
-    local chunk = source and loadstring(source)
-    if not chunk then
-        return nil
-    end
-    local ok, init = pcall(chunk)
-    return ok and type(init) == "function" and init or nil
-end
-local function D0()
-    local data = game:HttpGet(U0)
-    local init = L0(data)
-    assert(init, "Chilli Library engine failed to load.")
-    W0(data)
-    return init
-end
-local S0 = R0()
-local I0 = L0(S0)
-local C1 = I0 ~= nil
-if C1 then
-    task.spawn(function()
-        local ok, fresh = pcall(game.HttpGet, game, U0)
-        if ok and type(fresh) == "string" and fresh ~= "" and fresh ~= S0 and loadstring(fresh) then
-            W0(fresh)
-        end
-    end)
-else
-    I0 = D0()
-end
+local S0 = game:HttpGet(U0)
+local F0, E0 = loadstring(S0)
+assert(F0, E0)
+local O0, I0 = pcall(F0)
+assert(O0 and type(I0) == "function", tostring(I0))
 local O1, R1 = pcall(I0, B0, C0)
-if not (O1 and R1 == 0x51C71AA) and C1 then
-    I0 = D0()
-    O1, R1 = pcall(I0, B0, C0)
-end
 assert(O1 and R1 == 0x51C71AA, tostring(R1))
 end)()
 return ChilliLibrary
