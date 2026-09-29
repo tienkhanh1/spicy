@@ -1,9 +1,9 @@
 local SAE = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/StealAnEgg"
-local RAP = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/RideAPet"
+local RAP = "https://api.luarmor.net/files/v4/loaders/0dbcaa9e992477523d38a8284d7dbdef.lua"
 local JFA = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/JumpForAnimals"
 local SAB = "https://raw.githubusercontent.com/tienkhanh1/spicy/refs/heads/main/Steal-a-Brainrot"
-local MM2 = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/MM2"
-local BROOK = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/Brookhaven"
+local MM2 = "https://api.luarmor.net/files/v4/loaders/2bf348894416e1d3deee40be756d42ff.lua"
+local BROOK = "https://api.luarmor.net/files/v4/loaders/89190a03fd337349cef140d576357ba3.lua"
 
 local byGameId = {
     [10563114921] = SAE,
