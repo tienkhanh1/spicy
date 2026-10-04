@@ -1,5 +1,5 @@
-local SAE = "https://raw.githubusercontent.com/tienkhanh1/chilli3/refs/heads/main/spicy3"
-local RAP = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/RideAPet"
+local SAE = "https://api.luarmor.net/files/v4/loaders/d70c93187f4801ff5b907707597a24be.lua"
+local RAP = "https://api.luarmor.net/files/v4/loaders/0dbcaa9e992477523d38a8284d7dbdef.lua"
 local JFA = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/JumpForAnimals"
 local SAB = "https://raw.githubusercontent.com/tienkhanh1/spicy/refs/heads/main/Steal-a-Brainrot"
 local MM2 = "https://api.luarmor.net/files/v4/loaders/2bf348894416e1d3deee40be756d42ff.lua"
